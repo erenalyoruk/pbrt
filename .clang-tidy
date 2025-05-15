@@ -1,0 +1,36 @@
+Checks: >
+  -*,
+  bugprone-*,
+  cert-*,
+  concurrency-*,
+  cppcoreguidelines-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -readability-magic-numbers,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length,
+  -bugprone-easily-swappable-parameters,
+  -modernize-use-nodiscard
+
+WarningsAsErrors: "*"
+
+CheckOptions:
+  readability-identifier-naming.NamespaceCase: lower_case
+  readability-identifier-naming.ClassCase: CamelCase
+  readability-identifier-naming.StructCase: CamelCase
+  readability-identifier-naming.EnumCase: CamelCase
+  readability-identifier-naming.EnumConstantCase: CamelCase
+  readability-identifier-naming.FunctionCase: lower_case
+  readability-identifier-naming.VariableCase: camelBack
+  readability-identifier-naming.PrivateMemberCase: camelBack
+  readability-identifier-naming.PrivateMemberPrefix: m_
+  readability-identifier-naming.ParameterCase: camelBack
+  readability-identifier-naming.ConstexprFunctionCase: UPPER_CASE
+  readability-identifier-naming.ConstexprMethodCase: lower_case
+  readability-identifier-naming.GlobalConstantCase: UPPER_CASE
+  cppcoreguidelines-macro-usage.CheckCapsOnly: true
+  cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true

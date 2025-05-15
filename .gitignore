@@ -1,0 +1,12 @@
+# clangd cache
+.cache/
+
+# compilation database
+compile_commands.json
+
+# editor folders
+.vscode/
+
+# build artifacts
+bin/
+out/

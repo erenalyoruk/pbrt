@@ -1,0 +1,16 @@
+BasedOnStyle: Microsoft
+IndentPPDirectives: BeforeHash
+BreakTemplateDeclarations: Yes
+ColumnLimit: 100
+IncludeBlocks: Regroup
+SortIncludes: CaseSensitive
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+IncludeCategories:
+  - Regex: '^".*.(h|hpp)"'
+    Priority: 1
+  - Regex: "^<.*\\.(h|hpp)>"
+    Priority: 2
+  - Regex: "^<.*>"
+    Priority: 3
