@@ -23,6 +23,12 @@ set_target_properties(
 
 add_subdirectory("core")
 
+target_sources(
+  pbrt_tests
+  PRIVATE
+    "types.cpp"
+)
+
 include(CTest)
 include(Catch)
 catch_discover_tests(pbrt_tests)

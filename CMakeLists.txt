@@ -39,6 +39,12 @@ set_target_properties(
     CXX_EXTENSIONS OFF
 )
 
+target_compile_definitions(
+  pbrt
+  PRIVATE
+    PBRT_EXPORTS
+)
+
 target_include_directories(
   pbrt
   PUBLIC

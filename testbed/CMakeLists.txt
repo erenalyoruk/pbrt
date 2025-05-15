@@ -21,3 +21,9 @@ target_link_libraries(
   PRIVATE
     pbrt
 )
+
+add_custom_command(
+  TARGET pbrt_testbed POST_BUILD
+  COMMAND "${CMAKE_COMMAND}" -E copy -t $<TARGET_FILE_DIR:pbrt_testbed> $<TARGET_RUNTIME_DLLS:pbrt_testbed>
+  COMMAND_EXPAND_LISTS
+)

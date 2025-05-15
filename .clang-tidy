@@ -34,3 +34,4 @@ CheckOptions:
   readability-identifier-naming.GlobalConstantCase: UPPER_CASE
   cppcoreguidelines-macro-usage.CheckCapsOnly: true
   cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true
+  misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: true
