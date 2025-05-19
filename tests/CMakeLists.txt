@@ -1,5 +1,8 @@
-find_package(Catch2 CONFIG REQUIRED)
+find_package(Catch2 CONFIG QUIET)
+
 if (NOT Catch2_FOUND)
+  message(STATUS "Catch2 not found, fetching...")
+
   include(FetchContent)
   FetchContent_Declare(
     catch2

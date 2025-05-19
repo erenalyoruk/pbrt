@@ -4,6 +4,7 @@ project(pbrt LANGUAGES CXX VERSION 0.0.1)
 
 option(PBRT_BUILD_TESTS "Build tests" ON)
 option(PBRT_BUILD_TESTBED "Build testbed" ON)
+option(PBRT_BUILD_DOCS "Build docs" ON)
 
 add_library(pbrt_config INTERFACE)
 
@@ -70,4 +71,8 @@ endif()
 if (PBRT_BUILD_TESTS)
   enable_testing()
   add_subdirectory("tests")
+endif()
+
+if (PBRT_BUILD_DOCS)
+  add_subdirectory("docs")
 endif()
