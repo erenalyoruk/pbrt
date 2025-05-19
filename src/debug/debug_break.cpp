@@ -5,6 +5,8 @@
   #include <Windows.h>
 
   #define PBRT_DEBUG_BREAK() DebugBreak()
+#else
+  #error "Unsupported platform for debug break"
 #endif
 
 namespace pbrt::debug

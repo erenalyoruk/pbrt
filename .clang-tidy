@@ -28,6 +28,7 @@ CheckOptions:
   readability-identifier-naming.VariableCase: camelBack
   readability-identifier-naming.PrivateMemberCase: camelBack
   readability-identifier-naming.PrivateMemberPrefix: m_
+  readability-identifier-naming.ConstantMemberPrefix: m_
   readability-identifier-naming.ParameterCase: camelBack
   readability-identifier-naming.ConstexprFunctionCase: UPPER_CASE
   readability-identifier-naming.ConstexprMethodCase: lower_case
