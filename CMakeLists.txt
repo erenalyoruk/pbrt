@@ -1,16 +1,41 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(pbrt LANGUAGES CXX VERSION 0.0.1)
-
+option(PBRT_BUILD_SHARED "Build shared library" ON)
 option(PBRT_BUILD_TESTS "Build tests" ON)
 option(PBRT_BUILD_TESTBED "Build testbed" ON)
 option(PBRT_BUILD_DOCS "Build docs" ON)
+option(PBRT_VERBOSE "Enable tracing" ON)
+option(PBRT_DISABLE_LOGGING "Disable logs" OFF)
 
-add_library(pbrt_config INTERFACE)
+project(pbrt LANGUAGES CXX VERSION 0.0.1)
+
+if (PBRT_BUILD_SHARED)
+  set(PBRT_LIB_TYPE SHARED)
+else()
+  set(PBRT_LIB_TYPE STATIC)
+endif()
+
+add_library(pbrt ${PBRT_LIB_TYPE})
+
+set_target_properties(
+  pbrt
+  PROPERTIES
+    CXX_STANDARD 23
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+    DEBUG_POSTFIX "d"
+)
+
+if(PBRT_DISABLE_LOGGING)
+  message(STATUS "Logging is disabled")
+endif()
 
 target_compile_definitions(
-  pbrt_config
-  INTERFACE
+  pbrt
+  PUBLIC
+    $<$<BOOL:${PBRT_VERBOSE}>:PBRT_VERBOSE>
+    $<$<BOOL:${PBRT_DISABLE_LOGGING}>:PBRT_DISABLE_LOGGING>
+
     # build definitions
     $<$<CONFIG:Debug>:PBRT_BUILD_DEBUG>
     $<$<CONFIG:Release,RelWithDebInfo,MinSizeRel>:PBRT_BUILD_RELEASE>
@@ -21,29 +46,17 @@ target_compile_definitions(
     # compiler definitions
     $<$<CXX_COMPILER_ID:MSVC>:PBRT_COMPILER_MSVC>
     $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:PBRT_COMPILER_GCC>
+
+    $<$<BOOL:${PBRT_BUILD_SHARED}>:PBRT_BUILD_SHARED>
+  PRIVATE
+    $<$<BOOL:${PBRT_BUILD_SHARED}>:PBRT_EXPORTS>
 )
 
 target_compile_options(
-  pbrt_config
-  INTERFACE
-    $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wall -Wextra -pedantic>
-    $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX /permissive /Zc:__cplusplus /Zc:preprocessor>
-)
-
-add_library(pbrt)
-
-set_target_properties(
-  pbrt
-  PROPERTIES
-    CXX_STANDARD 23
-    CXX_STANDARD_REQUIRED ON
-    CXX_EXTENSIONS OFF
-)
-
-target_compile_definitions(
   pbrt
   PRIVATE
-    PBRT_EXPORTS
+    $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wall -Wextra -pedantic>
+    $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX /permissive /Zc:__cplusplus /Zc:preprocessor>
 )
 
 target_include_directories(
@@ -54,12 +67,6 @@ target_include_directories(
   PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/src>
     $<INSTALL_INTERFACE:src>
-)
-
-target_link_libraries(
-  pbrt
-  PUBLIC
-    pbrt_config
 )
 
 add_subdirectory("src")

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "pbrt/export.hpp"
+
 namespace pbrt::debug
 {
 /**
@@ -13,6 +15,6 @@ namespace pbrt::debug
  * architecture-specific instructions (e.g., `__debugbreak()` on MSVC,
  * `__builtin_trap()` or `asm("int3")` on GCC/Clang).
  */
-void debug_break();
+void PBRT_API debug_break();
 
 } // namespace pbrt::debug

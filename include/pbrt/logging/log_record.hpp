@@ -1,5 +1,6 @@
 #pragma once
 
+#include "pbrt/export.hpp"
 #include "pbrt/logging/log_level.hpp"
 
 #include <chrono>
@@ -8,7 +9,7 @@
 
 namespace pbrt::logging
 {
-struct LogRecord
+struct PBRT_API LogRecord
 {
   /**
    * @brief Timestamp of the log record.

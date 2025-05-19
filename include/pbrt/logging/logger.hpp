@@ -17,7 +17,7 @@ namespace pbrt::logging
  * The callback accepts a @ref LogRecord "LogRecord" object containing the log level,
  * formatted message, and source location.
  */
-PBRT_API class Logger
+class PBRT_API Logger
 {
 public:
   using Callback = std::function<void(const LogRecord &)>;
@@ -75,3 +75,88 @@ void Logger::log_impl(LogLevel level, std::source_location location,
   logCallback({level, std::move(message), location});
 }
 } // namespace pbrt::logging
+
+constexpr pbrt::logging::LogLevel PBRT_LOG_LEVEL{
+#if defined(PBRT_BUILD_DEBUG)
+  #if defined(PBRT_VERBOSE)
+    pbrt::logging::LogLevel::Trace
+  #else
+    pbrt::logging::LogLevel::Debug
+  #endif
+#else
+    pbrt::logging::LogLevel::Info
+#endif
+};
+
+template <typename... Args>
+constexpr void PBRT_LOG(pbrt::logging::LogLevel level, std::format_string<Args...> format,
+                        Args &&...args)
+{
+#if PBRT_DISABLE_LOGGING
+  (void)level;
+  (void)format;
+  ((void)std::forward<Args>(args), ...);
+#else
+  pbrt::logging::Logger::log(level, format, (std::forward<Args>(args))...);
+#endif
+}
+
+template <typename... Args>
+constexpr void PBRT_LOG_TRACE(std::format_string<Args...> format, Args &&...args)
+{
+  if constexpr (std::to_underlying(PBRT_LOG_LEVEL) <=
+                std::to_underlying(pbrt::logging::LogLevel::Trace))
+  {
+    PBRT_LOG(pbrt::logging::LogLevel::Trace, format, (std::forward<Args>(args))...);
+  }
+}
+
+template <typename... Args>
+constexpr void PBRT_LOG_DEBUG(std::format_string<Args...> format, Args &&...args)
+{
+  if constexpr (std::to_underlying(PBRT_LOG_LEVEL) <=
+                std::to_underlying(pbrt::logging::LogLevel::Debug))
+  {
+    PBRT_LOG(pbrt::logging::LogLevel::Debug, format, (std::forward<Args>(args))...);
+  }
+}
+
+template <typename... Args>
+constexpr void PBRT_LOG_INFO(std::format_string<Args...> format, Args &&...args)
+{
+  if constexpr (std::to_underlying(PBRT_LOG_LEVEL) <=
+                std::to_underlying(pbrt::logging::LogLevel::Info))
+  {
+    PBRT_LOG(pbrt::logging::LogLevel::Info, format, (std::forward<Args>(args))...);
+  }
+}
+
+template <typename... Args>
+constexpr void PBRT_LOG_WARNING(std::format_string<Args...> format, Args &&...args)
+{
+  if constexpr (std::to_underlying(PBRT_LOG_LEVEL) <=
+                std::to_underlying(pbrt::logging::LogLevel::Warning))
+  {
+    PBRT_LOG(pbrt::logging::LogLevel::Warning, format, (std::forward<Args>(args))...);
+  }
+}
+
+template <typename... Args>
+constexpr void PBRT_LOG_ERROR(std::format_string<Args...> format, Args &&...args)
+{
+  if constexpr (std::to_underlying(PBRT_LOG_LEVEL) <=
+                std::to_underlying(pbrt::logging::LogLevel::Error))
+  {
+    PBRT_LOG(pbrt::logging::LogLevel::Error, format, (std::forward<Args>(args))...);
+  }
+}
+
+template <typename... Args>
+constexpr void PBRT_LOG_CRITICAL(std::format_string<Args...> format, Args &&...args)
+{
+  if constexpr (std::to_underlying(PBRT_LOG_LEVEL) <=
+                std::to_underlying(pbrt::logging::LogLevel::Critical))
+  {
+    PBRT_LOG(pbrt::logging::LogLevel::Critical, format, (std::forward<Args>(args))...);
+  }
+}
