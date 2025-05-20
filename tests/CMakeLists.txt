@@ -27,6 +27,7 @@ set_target_properties(
 target_sources(
   pbrt_tests
   PRIVATE
+    "assertions.cpp"
     "types.cpp"
 )
 

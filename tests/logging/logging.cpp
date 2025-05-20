@@ -6,7 +6,7 @@
 #include <source_location>
 #include <string>
 
-TEST_CASE("Logger test", "[logging]")
+TEST_CASE("Logger should properly build log record", "[logging]")
 {
   using namespace pbrt::logging;
 

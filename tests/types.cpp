@@ -3,7 +3,7 @@
 
 #include <type_traits>
 
-TEST_CASE("Primitive types", "[types]")
+TEST_CASE("Primitive types are correctly aliased", "[types]")
 {
   REQUIRE(std::is_same_v<pbrt::u8, std::uint8_t>);
   REQUIRE(std::is_same_v<pbrt::u16, std::uint16_t>);
