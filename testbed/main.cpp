@@ -31,7 +31,7 @@ int main()
       break;
     }
 
-    std::println("[{}] {}", level, record.message);
+    std::println("[{}] {} {}", level, record.message, record.location.file_name());
   });
 
   PBRT_LOG_TRACE("Trace: {}", 0);

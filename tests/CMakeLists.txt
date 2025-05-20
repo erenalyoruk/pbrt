@@ -24,13 +24,13 @@ set_target_properties(
     CXX_EXTENSIONS OFF
 )
 
-add_subdirectory("core")
-
 target_sources(
   pbrt_tests
   PRIVATE
     "types.cpp"
 )
+
+add_subdirectory("logging")
 
 include(CTest)
 include(Catch)
@@ -41,4 +41,10 @@ target_link_libraries(
   PRIVATE
     pbrt
     Catch2::Catch2WithMain
+)
+
+add_custom_command(
+  TARGET pbrt_tests PRE_BUILD
+  COMMAND "${CMAKE_COMMAND}" -E copy -t $<TARGET_FILE_DIR:pbrt_tests> $<TARGET_RUNTIME_DLLS:pbrt_tests>
+  COMMAND_EXPAND_LISTS
 )

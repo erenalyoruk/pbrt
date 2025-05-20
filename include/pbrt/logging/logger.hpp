@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pbrt/export.hpp"
+#include "pbrt/inline.hpp"
 #include "pbrt/logging/log_level.hpp"
 #include "pbrt/logging/log_record.hpp"
 
@@ -40,6 +41,7 @@ public:
    *
    * @tparam Args Types of the arguments to be formatted.
    * @param level The log level for the message.
+   * @param location The source location of the log message.
    * @param format The format string for the message. It must be a valid `std::format`-compatible
    * string.
    * @param args Arguments to be formatted into the message.
@@ -47,116 +49,74 @@ public:
    * @note The format string should be compatible with `std::format`.
    */
   template <typename... Args>
-  static void log(LogLevel level, std::format_string<Args...> format, Args &&...args);
+  PBRT_INLINE static void log(LogLevel level, std::source_location location,
+                              std::format_string<Args...> format, Args &&...args);
 
 private:
   inline static Callback logCallback{nullptr};
-
-  /**
-   * @internal
-   * Helper implementation that logs a message with source location.
-   */
-  template <typename... Args>
-  static void log_impl(LogLevel level, std::source_location location,
-                       std::format_string<Args...> format, Args &&...args);
 };
 
 template <typename... Args>
-void Logger::log(LogLevel level, std::format_string<Args...> format, Args &&...args)
+PBRT_INLINE void Logger::log(LogLevel level, std::source_location location,
+                             std::format_string<Args...> format, Args &&...args)
 {
-  log_impl(level, std::source_location::current(), format, (std::forward<Args>(args))...);
-}
-
-template <typename... Args>
-void Logger::log_impl(LogLevel level, std::source_location location,
-                      std::format_string<Args...> format, Args &&...args)
-{
-  auto message{std::format(format, (std::forward<Args>(args))...)};
-  logCallback({level, std::move(message), location});
+  logCallback({level, std::format(format, (std::forward<Args>(args))...), location});
 }
 } // namespace pbrt::logging
 
-constexpr pbrt::logging::LogLevel PBRT_LOG_LEVEL{
+constexpr pbrt::u8 PBRT_LOG_LEVEL{
 #if defined(PBRT_BUILD_DEBUG)
   #if defined(PBRT_VERBOSE)
-    pbrt::logging::LogLevel::Trace
+    PBRT_LOG_LEVEL_TRACE
   #else
-    pbrt::logging::LogLevel::Debug
+    PBRT_LOG_LEVEL_DEBUG
   #endif
 #else
-    pbrt::logging::LogLevel::Info
+    PBRT_LOG_LEVEL_INFO
 #endif
 };
 
-template <typename... Args>
-constexpr void PBRT_LOG(pbrt::logging::LogLevel level, std::format_string<Args...> format,
-                        Args &&...args)
-{
-#if PBRT_DISABLE_LOGGING
-  (void)level;
-  (void)format;
-  ((void)std::forward<Args>(args), ...);
+#if defined(PBRT_DISABLE_LOGGING)
+  #define PBRT_LOG_TRACE(...) (void)0
 #else
-  pbrt::logging::Logger::log(level, format, (std::forward<Args>(args))...);
+  #define PBRT_LOG(level, format, ...)                                                             \
+    pbrt::logging::Logger::log(level, std::source_location::current(), format, __VA_ARGS__)
 #endif
-}
 
-template <typename... Args>
-constexpr void PBRT_LOG_TRACE(std::format_string<Args...> format, Args &&...args)
-{
-  if constexpr (std::to_underlying(PBRT_LOG_LEVEL) <=
-                std::to_underlying(pbrt::logging::LogLevel::Trace))
-  {
-    PBRT_LOG(pbrt::logging::LogLevel::Trace, format, (std::forward<Args>(args))...);
-  }
-}
+#if PBRT_LOG_LEVEL <= PBRT_LOG_LEVEL_TRACE
+  #define PBRT_LOG_TRACE(format, ...) PBRT_LOG(pbrt::logging::LogLevel::Trace, format, __VA_ARGS__)
+#else
+  #define PBRT_LOG_DEBUG(...) (void)0
+#endif
 
-template <typename... Args>
-constexpr void PBRT_LOG_DEBUG(std::format_string<Args...> format, Args &&...args)
-{
-  if constexpr (std::to_underlying(PBRT_LOG_LEVEL) <=
-                std::to_underlying(pbrt::logging::LogLevel::Debug))
-  {
-    PBRT_LOG(pbrt::logging::LogLevel::Debug, format, (std::forward<Args>(args))...);
-  }
-}
+#if PBRT_LOG_LEVEL <= PBRT_LOG_LEVEL_DEBUG
+  #define PBRT_LOG_DEBUG(format, ...) PBRT_LOG(pbrt::logging::LogLevel::Debug, format, __VA_ARGS__)
+#else
+  #define PBRT_LOG_DEBUG(...) (void)0
+#endif
 
-template <typename... Args>
-constexpr void PBRT_LOG_INFO(std::format_string<Args...> format, Args &&...args)
-{
-  if constexpr (std::to_underlying(PBRT_LOG_LEVEL) <=
-                std::to_underlying(pbrt::logging::LogLevel::Info))
-  {
-    PBRT_LOG(pbrt::logging::LogLevel::Info, format, (std::forward<Args>(args))...);
-  }
-}
+#if PBRT_LOG_LEVEL <= PBRT_LOG_LEVEL_INFO
+  #define PBRT_LOG_INFO(format, ...) PBRT_LOG(pbrt::logging::LogLevel::Info, format, __VA_ARGS__)
+#else
+  #define PBRT_LOG_INFO(...) (void)0
+#endif
 
-template <typename... Args>
-constexpr void PBRT_LOG_WARNING(std::format_string<Args...> format, Args &&...args)
-{
-  if constexpr (std::to_underlying(PBRT_LOG_LEVEL) <=
-                std::to_underlying(pbrt::logging::LogLevel::Warning))
-  {
-    PBRT_LOG(pbrt::logging::LogLevel::Warning, format, (std::forward<Args>(args))...);
-  }
-}
+#if PBRT_LOG_LEVEL <= PBRT_LOG_LEVEL_WARNING
+  #define PBRT_LOG_WARNING(format, ...)                                                            \
+    PBRT_LOG(pbrt::logging::LogLevel::Warning, format, __VA_ARGS__)
+#else
+  #define PBRT_LOG_WARNING(...) (void)0
 
-template <typename... Args>
-constexpr void PBRT_LOG_ERROR(std::format_string<Args...> format, Args &&...args)
-{
-  if constexpr (std::to_underlying(PBRT_LOG_LEVEL) <=
-                std::to_underlying(pbrt::logging::LogLevel::Error))
-  {
-    PBRT_LOG(pbrt::logging::LogLevel::Error, format, (std::forward<Args>(args))...);
-  }
-}
+#endif
+#if PBRT_LOG_LEVEL <= PBRT_LOG_LEVEL_ERROR
+  #define PBRT_LOG_ERROR(format, ...) PBRT_LOG(pbrt::logging::LogLevel::Error, format, __VA_ARGS__)
+#else
+  #define PBRT_LOG_ERROR(...) (void)0
+#endif
 
-template <typename... Args>
-constexpr void PBRT_LOG_CRITICAL(std::format_string<Args...> format, Args &&...args)
-{
-  if constexpr (std::to_underlying(PBRT_LOG_LEVEL) <=
-                std::to_underlying(pbrt::logging::LogLevel::Critical))
-  {
-    PBRT_LOG(pbrt::logging::LogLevel::Critical, format, (std::forward<Args>(args))...);
-  }
-}
+#if PBRT_LOG_LEVEL <= PBRT_LOG_LEVEL_CRITICAL
+  #define PBRT_LOG_CRITICAL(format, ...)                                                           \
+    PBRT_LOG(pbrt::logging::LogLevel::Critical, format, __VA_ARGS__)
+#else
+  #define PBRT_LOG_CRITICAL(...) (void)0
+#endif
