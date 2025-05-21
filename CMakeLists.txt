@@ -69,6 +69,14 @@ target_include_directories(
     $<INSTALL_INTERFACE:src>
 )
 
+find_package(EnTT CONFIG REQUIRED)
+
+target_link_libraries(
+  pbrt
+  PUBLIC
+    EnTT::EnTT
+)
+
 add_subdirectory("src")
 
 if (PBRT_BUILD_TESTBED)

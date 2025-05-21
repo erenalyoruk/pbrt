@@ -7,7 +7,7 @@
 
 int main()
 {
-  pbrt::logging::Logger::set_callback([](const pbrt::logging::LogRecord &record) {
+  pbrt::logging::Logger::get_instance().set_callback([](const pbrt::logging::LogRecord &record) {
     std::string level;
     switch (record.level)
     {

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "pbrt/export.hpp"
-#include "pbrt/inline.hpp"
 #include "pbrt/logging/log_level.hpp"
 #include "pbrt/logging/log_record.hpp"
 
@@ -24,14 +23,21 @@ public:
   using Callback = std::function<void(const LogRecord &)>;
 
   /**
+   * @brief Get the singleton instance of the Logger.
+   *
+   * @return Logger& The singleton instance of the Logger.
+   */
+  static Logger &get_instance();
+
+  /**
    * @brief Set the callback function for logging messages.
    *
    * The callback accepts a @ref LogRecord "LogRecord" object containing log level,
    * formatted message, and source location.
    *
-   * @param callback The callback function to invoke for log messages.
+   * @param callback The callback function to be called for log messages.
    */
-  static void set_callback(Callback callback);
+  void set_callback(Callback callback);
 
   /**
    * @brief Log a message with the specified log level.
@@ -49,18 +55,27 @@ public:
    * @note The format string should be compatible with `std::format`.
    */
   template <typename... Args>
-  PBRT_INLINE static void log(LogLevel level, std::source_location location,
-                              std::format_string<Args...> format, Args &&...args);
+  void log(LogLevel level, std::source_location location, std::format_string<Args...> format,
+           Args &&...args) const;
 
 private:
-  inline static Callback logCallback{nullptr};
+  Callback m_logCallback{nullptr};
 };
 
-template <typename... Args>
-PBRT_INLINE void Logger::log(LogLevel level, std::source_location location,
-                             std::format_string<Args...> format, Args &&...args)
+inline Logger &Logger::get_instance()
 {
-  logCallback({level, std::format(format, (std::forward<Args>(args))...), location});
+  static Logger instance;
+  return instance;
+}
+
+template <typename... Args>
+inline void Logger::log(LogLevel level, std::source_location location,
+                        std::format_string<Args...> format, Args &&...args) const
+{
+  if (m_logCallback != nullptr)
+  {
+    m_logCallback({level, std::format(format, (std::forward<Args>(args))...), location});
+  }
 }
 } // namespace pbrt::logging
 
@@ -80,7 +95,8 @@ constexpr pbrt::u8 PBRT_LOG_LEVEL{
   #define PBRT_LOG_TRACE(...) (void)0
 #else
   #define PBRT_LOG(level, format, ...)                                                             \
-    pbrt::logging::Logger::log(level, std::source_location::current(), format, __VA_ARGS__)
+    pbrt::logging::Logger::get_instance().log(level, std::source_location::current(), format,      \
+                                              __VA_ARGS__)
 #endif
 
 #if PBRT_LOG_LEVEL <= PBRT_LOG_LEVEL_TRACE
@@ -106,8 +122,8 @@ constexpr pbrt::u8 PBRT_LOG_LEVEL{
     PBRT_LOG(pbrt::logging::LogLevel::Warning, format, __VA_ARGS__)
 #else
   #define PBRT_LOG_WARNING(...) (void)0
-
 #endif
+
 #if PBRT_LOG_LEVEL <= PBRT_LOG_LEVEL_ERROR
   #define PBRT_LOG_ERROR(format, ...) PBRT_LOG(pbrt::logging::LogLevel::Error, format, __VA_ARGS__)
 #else

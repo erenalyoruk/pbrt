@@ -10,13 +10,11 @@ TEST_CASE("Logger should properly build log record", "[logging]")
 {
   using namespace pbrt::logging;
 
-  bool called{false};
   LogLevel level{};
   std::string msg;
   std::source_location location{};
 
-  Logger::set_callback([&](const LogRecord &record) {
-    called = true;
+  Logger::get_instance().set_callback([&](const LogRecord &record) {
     level = record.level;
     msg = record.message;
     location = record.location;
@@ -24,10 +22,11 @@ TEST_CASE("Logger should properly build log record", "[logging]")
 
   PBRT_LOG_INFO("Test {}", 123);
 
-  REQUIRE(called);
   REQUIRE(level == LogLevel::Info);
   REQUIRE(msg == "Test 123");
 
   std::string filename{location.file_name()};
   REQUIRE(filename.find("logging.cpp") != std::string::npos);
+
+  Logger::get_instance().set_callback(nullptr);
 }
