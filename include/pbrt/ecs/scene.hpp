@@ -69,11 +69,11 @@ public:
    *
    * @tparam Component The type of the component to get.
    * @param entity The entity to get the component from.
-   * @return std::optional<std::reference_wrapper<const Component>> A const reference to the
+   * @return std::optional<std::reference_wrapper<Component const>> A const reference to the
    * component, or std::nullopt if the component could not be found.
    */
   template <typename Component>
-  [[nodiscard]] std::optional<std::reference_wrapper<const Component>> get_component(
+  [[nodiscard]] std::optional<std::reference_wrapper<Component const>> get_component(
       Entity entity) const;
 
   /**
@@ -124,9 +124,9 @@ public:
   /**
    * @brief Gets the registry.
    *
-   * @return const Registry& A const reference to the registry.
+   * @return Registry const& A const reference to the registry.
    */
-  [[nodiscard]] const Registry &get_registry() const;
+  [[nodiscard]] Registry const &get_registry() const;
 
 private:
   Registry m_registry;
@@ -171,7 +171,7 @@ inline std::optional<std::reference_wrapper<Component>> Scene::get_component(Ent
 }
 
 template <typename Component>
-inline std::optional<std::reference_wrapper<const Component>> Scene::get_component(
+inline std::optional<std::reference_wrapper<Component const>> Scene::get_component(
     Entity entity) const
 {
   if (!m_registry.valid(entity))

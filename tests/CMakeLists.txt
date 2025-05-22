@@ -33,6 +33,7 @@ target_sources(
 
 add_subdirectory("logging")
 add_subdirectory("ecs")
+add_subdirectory("math")
 
 include(CTest)
 include(Catch)

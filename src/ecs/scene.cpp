@@ -20,7 +20,7 @@ Registry &Scene::get_registry()
   return m_registry;
 }
 
-const Registry &Scene::get_registry() const
+Registry const &Scene::get_registry() const
 {
   return m_registry;
 }
