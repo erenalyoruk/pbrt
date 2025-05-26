@@ -2,6 +2,7 @@
 
 #include "pbrt/assertions.hpp"
 #include "pbrt/inline.hpp"
+#include "pbrt/math/traits.hpp"
 #include "pbrt/types.hpp"
 
 #include <algorithm>
@@ -9,19 +10,9 @@
 #include <cmath>
 #include <numeric>
 #include <stdexcept>
-#include <type_traits>
 
 namespace pbrt::math
 {
-template <typename T>
-concept Arithmetic = std::is_arithmetic_v<T>;
-
-template <typename T>
-concept FloatingPoint = std::is_floating_point_v<T>;
-
-template <typename T, typename U>
-concept ConvertibleTo = std::is_convertible_v<T, U>;
-
 template <Arithmetic T, usize N>
   requires(N > 0)
 class Vector
@@ -216,16 +207,18 @@ public:
    *
    * @param other The vector to divide by.
    * @return Vector& A reference to this vector.
+   * @throw std::domain_error If any element of the other vector is zero.
    */
-  PBRT_INLINE constexpr Vector &operator/=(Vector const &other) noexcept;
+  PBRT_INLINE constexpr Vector &operator/=(Vector const &other);
 
   /**
    * @brief Divide this vector by scalar.
    *
    * @param scalar The scalar to divide by.
    * @return Vector& A reference to this vector.
+   * @throw std::domain_error If the scalar is zero.
    */
-  PBRT_INLINE constexpr Vector &operator/=(T const &scalar) noexcept;
+  PBRT_INLINE constexpr Vector &operator/=(T const &scalar);
 
   /**
    * @brief Add another vector to this vector.
@@ -287,16 +280,18 @@ public:
    *
    * @param other The vector to divide by.
    * @return Vector A new vector that is the quotient of this vector and the other vector.
+   * @throw std::domain_error If any element of the other vector is zero.
    */
-  PBRT_INLINE constexpr Vector operator/(Vector const &other) const noexcept;
+  PBRT_INLINE constexpr Vector operator/(Vector const &other) const;
 
   /**
    * @brief Divide this vector by a scalar.
    *
    * @param scalar The scalar to divide by.
    * @return Vector A new vector that is the quotient of this vector and the scalar.
+   * @throw std::domain_error If the scalar is zero.
    */
-  PBRT_INLINE constexpr Vector operator/(T const &scalar) const noexcept;
+  PBRT_INLINE constexpr Vector operator/(T const &scalar) const;
 
   /**
    * @brief Equality operator. Each element is compared for equality.
@@ -701,10 +696,8 @@ private:
  * @return Vector A new vector with each component multiplied by the scalar.
  */
 template <Arithmetic T, usize N>
-PBRT_INLINE constexpr Vector<T, N> operator*(T const &scalar, Vector<T, N> const &vector) noexcept
-{
-  return vector * scalar;
-}
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N> operator*(
+    T const &scalar, Vector<T, N> const &vector) noexcept;
 
 /**
  * @brief Cross product of two 3D vectors.
@@ -715,15 +708,8 @@ PBRT_INLINE constexpr Vector<T, N> operator*(T const &scalar, Vector<T, N> const
  * @return Vector A new vector that is the cross product of the two vectors.
  */
 template <Arithmetic T>
-[[nodiscard]] PBRT_INLINE constexpr Vector<T, 3> cross(Vector<T, 3> const &lhs,
-                                                       Vector<T, 3> const &rhs) noexcept
-{
-  return Vector<T, 3>{
-      lhs.y() * rhs.z() - lhs.z() * rhs.y(), // a[1] * b[2] - a[2] * b[1]
-      lhs.z() * rhs.x() - lhs.x() * rhs.z(), // a[2] * b[0] - a[0] * b[2]
-      lhs.x() * rhs.y() - lhs.y() * rhs.x()  // a[0] * b[1] - a[1] * b[0]
-  };
-}
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, 3> cross(Vector<T, 3> const &lhs,
+                                                                Vector<T, 3> const &rhs) noexcept;
 
 /**
  * @brief Dot product of two vectors.
@@ -735,10 +721,8 @@ template <Arithmetic T>
  * @return T The dot product of the two vectors.
  */
 template <Arithmetic T, usize N>
-[[nodiscard]] PBRT_INLINE constexpr T dot(Vector<T, N> const &lhs, Vector<T, N> const &rhs) noexcept
-{
-  return lhs.dot(rhs);
-}
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr T dot(Vector<T, N> const &lhs,
+                                                   Vector<T, N> const &rhs) noexcept;
 
 /**
  * @brief Length squared of a vector.
@@ -749,10 +733,7 @@ template <Arithmetic T, usize N>
  * @return T The length squared of the vector.
  */
 template <Arithmetic T, usize N>
-[[nodiscard]] PBRT_INLINE constexpr T length_squared(Vector<T, N> const &vector) noexcept
-{
-  return vector.length_squared();
-}
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr T length_squared(Vector<T, N> const &vector) noexcept;
 
 /**
  * @brief Length of a vector.
@@ -763,10 +744,7 @@ template <Arithmetic T, usize N>
  * @return T The length of the vector.
  */
 template <FloatingPoint T, usize N>
-[[nodiscard]] PBRT_INLINE constexpr T length(Vector<T, N> const &vector) noexcept
-{
-  return vector.length();
-}
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr T length(Vector<T, N> const &vector) noexcept;
 
 /**
  * @brief Distance squared between two vectors.
@@ -778,11 +756,8 @@ template <FloatingPoint T, usize N>
  * @return T The distance squared between the two vectors.
  */
 template <Arithmetic T, usize N>
-[[nodiscard]] PBRT_INLINE constexpr T distance_squared(Vector<T, N> const &lhs,
-                                                       Vector<T, N> const &rhs) noexcept
-{
-  return lhs.distance_squared(rhs);
-}
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr T distance_squared(Vector<T, N> const &lhs,
+                                                                Vector<T, N> const &rhs) noexcept;
 
 /**
  * @brief Distance between two vectors.
@@ -794,11 +769,8 @@ template <Arithmetic T, usize N>
  * @return T The distance between the two vectors.
  */
 template <FloatingPoint T, usize N>
-[[nodiscard]] PBRT_INLINE constexpr T distance(Vector<T, N> const &lhs,
-                                               Vector<T, N> const &rhs) noexcept
-{
-  return lhs.distance(rhs);
-}
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr T distance(Vector<T, N> const &lhs,
+                                                        Vector<T, N> const &rhs) noexcept;
 
 /**
  * @brief Normalize a vector.
@@ -809,11 +781,9 @@ template <FloatingPoint T, usize N>
  * @return Vector A new vector that is the normalized version of the input vector.
  */
 template <Arithmetic T, usize N>
-[[nodiscard]] PBRT_INLINE constexpr Vector<T, N> normalize(Vector<T, N> const &vector) noexcept
-  requires FloatingPoint<T>
-{
-  return vector.normalized();
-}
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N> normalize(
+    Vector<T, N> const &vector) noexcept
+  requires FloatingPoint<T>;
 
 /**
  * @brief Normalize a vector with a fallback value.
@@ -826,12 +796,9 @@ template <Arithmetic T, usize N>
  * vector.
  */
 template <Arithmetic T, usize N>
-[[nodiscard]] PBRT_INLINE constexpr Vector<T, N> safe_normalized(
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N> safe_normalized(
     Vector<T, N> const &vector, Vector<T, N> const &fallback) noexcept
-  requires FloatingPoint<T>
-{
-  return vector.safe_normalized(fallback);
-}
+  requires FloatingPoint<T>;
 
 /**
  * @brief Linear interpolation between two vectors.
@@ -844,11 +811,9 @@ template <Arithmetic T, usize N>
  * @return Vector A new vector that is the result of linear interpolation between the two vectors.
  */
 template <FloatingPoint T, usize N>
-[[nodiscard]] PBRT_INLINE constexpr Vector<T, N> lerp(Vector<T, N> const &lhs,
-                                                      Vector<T, N> const &rhs, T const &t) noexcept
-{
-  return lhs.lerp(rhs, t);
-}
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N> lerp(Vector<T, N> const &lhs,
+                                                               Vector<T, N> const &rhs,
+                                                               T const &t) noexcept;
 
 /**
  * @brief Reflect a vector around a normal.
@@ -860,12 +825,9 @@ template <FloatingPoint T, usize N>
  * @return Vector A new vector that is the reflection of the input vector around the normal.
  */
 template <Arithmetic T, usize N>
-[[nodiscard]] PBRT_INLINE constexpr Vector<T, N> reflect(Vector<T, N> const &vector,
-                                                         Vector<T, N> const &normal) noexcept
-  requires FloatingPoint<T>
-{
-  return vector.reflect(normal);
-}
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N> reflect(
+    Vector<T, N> const &vector, Vector<T, N> const &normal) noexcept
+  requires FloatingPoint<T>;
 
 /**
  * @brief Refract a vector through a surface with a given index of refraction.
@@ -878,13 +840,10 @@ template <Arithmetic T, usize N>
  * @return Vector A new vector that is the refracted version of the input vector.
  */
 template <Arithmetic T, usize N>
-[[nodiscard]] PBRT_INLINE constexpr Vector<T, N> refract(Vector<T, N> const &vector,
-                                                         Vector<T, N> const &normal,
-                                                         T const &eta) noexcept
-  requires FloatingPoint<T>
-{
-  return vector.refract(normal, eta);
-}
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N> refract(Vector<T, N> const &vector,
+                                                                  Vector<T, N> const &normal,
+                                                                  T const &eta) noexcept
+  requires FloatingPoint<T>;
 
 /**
  * @brief Get the minimum component of a vector.
@@ -896,17 +855,8 @@ template <Arithmetic T, usize N>
  * @return Vector A new vector with each component being the minimum of the two vectors.
  */
 template <Arithmetic T, usize N>
-[[nodiscard]] PBRT_INLINE constexpr Vector<T, N> min(Vector<T, N> const &lhs,
-                                                     Vector<T, N> const &rhs) noexcept
-{
-  Vector<T, N> result{};
-  for (usize i = 0; i < N; ++i)
-  {
-    result[i] = std::min(lhs[i], rhs[i]);
-  }
-
-  return result;
-}
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N> min(Vector<T, N> const &lhs,
+                                                              Vector<T, N> const &rhs) noexcept;
 
 /**
  * @brief Get the maximum component of a vector.
@@ -918,17 +868,8 @@ template <Arithmetic T, usize N>
  * @return Vector A new vector with each component being the maximum of the two vectors.
  */
 template <Arithmetic T, usize N>
-[[nodiscard]] PBRT_INLINE constexpr Vector<T, N> max(Vector<T, N> const &lhs,
-                                                     Vector<T, N> const &rhs) noexcept
-{
-  Vector<T, N> result{};
-  for (usize i = 0; i < N; ++i)
-  {
-    result[i] = std::max(lhs[i], rhs[i]);
-  }
-
-  return result;
-}
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N> max(Vector<T, N> const &lhs,
+                                                              Vector<T, N> const &rhs) noexcept;
 
 /**
  * @brief Get the x and y components of a 3D vector as a 2D vector.
@@ -938,10 +879,7 @@ template <Arithmetic T, usize N>
  * @return Vector A new 2D vector containing the x and y components of the input vector.
  */
 template <Arithmetic T>
-[[nodiscard]] PBRT_INLINE constexpr Vector<T, 2> xy(Vector<T, 3> const &vector) noexcept
-{
-  return Vector<T, 2>{vector.x(), vector.y()};
-}
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, 2> xy(Vector<T, 3> const &vector) noexcept;
 
 /**
  * @brief Get the x and z components of a 3D vector as a 2D vector.
@@ -952,10 +890,17 @@ template <Arithmetic T>
  * @return Vector A new 2D vector containing the x and z components of the input vector.
  */
 template <Arithmetic T>
-[[nodiscard]] PBRT_INLINE constexpr Vector<T, 2> xz(Vector<T, 3> const &vector) noexcept
-{
-  return Vector<T, 2>{vector.x(), vector.z()};
-}
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, 2> xz(Vector<T, 3> const &vector) noexcept;
+/**
+ * @brief Get the y and z components of a 3D vector as a 2D vector.
+ *
+ * @tparam T The type of the vector components.
+ * @tparam N The number of components in the vector.
+ * @param vector The 3D vector to extract the y and z components from.
+ * @return Vector A new 2D vector containing the y and z components of the input vector.
+ */
+template <Arithmetic T>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, 2> yz(Vector<T, 3> const &vector) noexcept;
 
 /**
  * @brief Get the y and z components of a 3D vector as a 2D vector.
@@ -966,24 +911,27 @@ template <Arithmetic T>
  * @return Vector A new 2D vector containing the y and z components of the input vector.
  */
 template <Arithmetic T>
-[[nodiscard]] PBRT_INLINE constexpr Vector<T, 2> yz(Vector<T, 3> const &vector) noexcept
-{
-  return Vector<T, 2>{vector.y(), vector.z()};
-}
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, 3> xyz(Vector<T, 4> const &vector) noexcept;
 
-/**
- * @brief Get the y and z components of a 3D vector as a 2D vector.
- *
- * @tparam T The type of the vector components.
- * @tparam N The number of components in the vector.
- * @param vector The 3D vector to extract the y and z components from.
- * @return Vector A new 2D vector containing the y and z components of the input vector.
- */
-template <Arithmetic T>
-[[nodiscard]] PBRT_INLINE constexpr Vector<T, 3> xyz(Vector<T, 4> const &vector) noexcept
-{
-  return Vector<T, 3>{vector.x(), vector.y(), vector.z()};
-}
+using Vec2u = Vector<u32, 2>;
+using Vec3u = Vector<u32, 3>;
+using Vec4u = Vector<u32, 4>;
+
+using Vec2i = Vector<i32, 2>;
+using Vec3i = Vector<i32, 3>;
+using Vec4i = Vector<i32, 4>;
+
+using Vec2f = Vector<f32, 2>;
+using Vec3f = Vector<f32, 3>;
+using Vec4f = Vector<f32, 4>;
+
+using Vec2d = Vector<f64, 2>;
+using Vec3d = Vector<f64, 3>;
+using Vec4d = Vector<f64, 4>;
+
+using Vec2 = Vec2f;
+using Vec3 = Vec3f;
+using Vec4 = Vec4f;
 
 template <Arithmetic T, usize N>
   requires(N > 0)
@@ -1015,7 +963,6 @@ template <Arithmetic T, usize N>
 [[nodiscard]] PBRT_INLINE constexpr Vector<T, N>::Reference Vector<T, N>::operator[](
     SizeType index) noexcept
 {
-  PBRT_ASSERT_MSG(index < N, "Index out of bounds.");
   return m_data[index];
 }
 
@@ -1024,7 +971,6 @@ template <Arithmetic T, usize N>
 [[nodiscard]] PBRT_INLINE constexpr Vector<T, N>::ConstReference Vector<T, N>::operator[](
     SizeType index) const noexcept
 {
-  PBRT_ASSERT_MSG(index < N, "Index out of bounds.");
   return m_data[index];
 }
 
@@ -1191,11 +1137,15 @@ PBRT_INLINE constexpr Vector<T, N> &Vector<T, N>::operator*=(T const &scalar) no
 
 template <Arithmetic T, usize N>
   requires(N > 0)
-PBRT_INLINE constexpr Vector<T, N> &Vector<T, N>::operator/=(Vector const &other) noexcept
+PBRT_INLINE constexpr Vector<T, N> &Vector<T, N>::operator/=(Vector const &other)
 {
   for (SizeType i = 0; i < N; ++i)
   {
-    PBRT_ASSERT_MSG(other.m_data[i] != T{0}, "Division by zero in vector division.");
+    if (other.m_data[i] == T{0}) [[unlikely]]
+    {
+      throw std::domain_error{"Division by zero in vector division."};
+    }
+
     m_data[i] /= other.m_data[i];
   }
 
@@ -1204,9 +1154,13 @@ PBRT_INLINE constexpr Vector<T, N> &Vector<T, N>::operator/=(Vector const &other
 
 template <Arithmetic T, usize N>
   requires(N > 0)
-PBRT_INLINE constexpr Vector<T, N> &Vector<T, N>::operator/=(T const &scalar) noexcept
+PBRT_INLINE constexpr Vector<T, N> &Vector<T, N>::operator/=(T const &scalar)
 {
-  PBRT_ASSERT_MSG(scalar != T{0}, "Division by zero in vector division.");
+  if (scalar == T{0}) [[unlikely]]
+  {
+    throw std::domain_error{"Division by zero in vector division."};
+  }
+
   for (SizeType i = 0; i < N; ++i)
   {
     m_data[i] /= scalar;
@@ -1284,7 +1238,7 @@ PBRT_INLINE constexpr Vector<T, N> Vector<T, N>::operator*(T const &scalar) cons
 
 template <Arithmetic T, usize N>
   requires(N > 0)
-PBRT_INLINE constexpr Vector<T, N> Vector<T, N>::operator/(Vector const &other) const noexcept
+PBRT_INLINE constexpr Vector<T, N> Vector<T, N>::operator/(Vector const &other) const
 {
   Vector result{*this};
   result /= other;
@@ -1293,9 +1247,8 @@ PBRT_INLINE constexpr Vector<T, N> Vector<T, N>::operator/(Vector const &other) 
 
 template <Arithmetic T, usize N>
   requires(N > 0)
-PBRT_INLINE constexpr Vector<T, N> Vector<T, N>::operator/(T const &scalar) const noexcept
+PBRT_INLINE constexpr Vector<T, N> Vector<T, N>::operator/(T const &scalar) const
 {
-  PBRT_ASSERT_MSG(scalar != T{0}, "Division by zero in vector division.");
   Vector result{*this};
   result /= scalar;
   return result;
@@ -1307,7 +1260,7 @@ PBRT_INLINE constexpr bool Vector<T, N>::operator==(Vector<T, N> const &other) c
 {
   for (usize i = 0; i < N; ++i)
   {
-    if (at(i) != other[i])
+    if (m_data[i] != other[i])
     {
       return false;
     }
@@ -1343,6 +1296,27 @@ template <Arithmetic T, usize N>
   requires(N > 0)
 [[nodiscard]] PBRT_INLINE constexpr T Vector<T, N>::dot(Vector const &other) const noexcept
 {
+  if constexpr (N == 1)
+  {
+    return m_data[0] * other.m_data[0];
+  }
+
+  if constexpr (N == 2)
+  {
+    return m_data[0] * other.m_data[0] + m_data[1] * other.m_data[1];
+  }
+
+  if constexpr (N == 3)
+  {
+    return m_data[0] * other.m_data[0] + m_data[1] * other.m_data[1] + m_data[2] * other.m_data[2];
+  }
+
+  if constexpr (N == 4)
+  {
+    return m_data[0] * other.m_data[0] + m_data[1] * other.m_data[1] + m_data[2] * other.m_data[2] +
+           m_data[3] * other.m_data[3];
+  }
+
   return std::inner_product(cbegin(), cend(), other.cbegin(), T{0});
 }
 
@@ -1736,6 +1710,139 @@ template <Arithmetic T, usize N>
 }
 
 template <Arithmetic T, usize N>
+PBRT_API PBRT_INLINE constexpr Vector<T, N> operator*(T const &scalar,
+                                                      Vector<T, N> const &vector) noexcept
+{
+  return vector * scalar;
+}
+
+template <Arithmetic T>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, 3> cross(Vector<T, 3> const &lhs,
+                                                                Vector<T, 3> const &rhs) noexcept
+{
+  return {lhs[1] * rhs[2] - lhs[2] * rhs[1], lhs[2] * rhs[0] - lhs[0] * rhs[2],
+          lhs[0] * rhs[1] - lhs[1] * rhs[0]};
+}
+
+template <Arithmetic T, usize N>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr T dot(Vector<T, N> const &lhs,
+                                                   Vector<T, N> const &rhs) noexcept
+{
+  return lhs.dot(rhs);
+}
+
+template <Arithmetic T, usize N>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr T length_squared(Vector<T, N> const &vector) noexcept
+{
+  return vector.length_squared();
+}
+
+template <FloatingPoint T, usize N>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr T length(Vector<T, N> const &vector) noexcept
+{
+  return vector.length();
+}
+
+template <Arithmetic T, usize N>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr T distance_squared(Vector<T, N> const &lhs,
+                                                                Vector<T, N> const &rhs) noexcept
+{
+  return lhs.distance_squared(rhs);
+}
+
+template <FloatingPoint T, usize N>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr T distance(Vector<T, N> const &lhs,
+                                                        Vector<T, N> const &rhs) noexcept
+{
+  return lhs.distance(rhs);
+}
+
+template <Arithmetic T, usize N>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N> normalize(
+    Vector<T, N> const &vector) noexcept
+  requires FloatingPoint<T>
+{
+  return vector.normalized();
+}
+
+template <Arithmetic T, usize N>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N> safe_normalized(
+    Vector<T, N> const &vector, Vector<T, N> const &fallback) noexcept
+  requires FloatingPoint<T>
+{
+  return vector.safe_normalized(fallback);
+}
+
+template <FloatingPoint T, usize N>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N> lerp(Vector<T, N> const &lhs,
+                                                               Vector<T, N> const &rhs,
+                                                               T const &t) noexcept
+{
+  return lhs.lerp(rhs, t);
+}
+
+template <Arithmetic T, usize N>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N> reflect(
+    Vector<T, N> const &vector, Vector<T, N> const &normal) noexcept
+  requires FloatingPoint<T>
+{
+  return vector.reflect(normal);
+}
+
+template <Arithmetic T, usize N>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N> refract(Vector<T, N> const &vector,
+                                                                  Vector<T, N> const &normal,
+                                                                  T const &eta) noexcept
+  requires FloatingPoint<T>
+{
+  return vector.refract(normal, eta);
+}
+
+template <Arithmetic T, usize N>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N> min(Vector<T, N> const &lhs,
+                                                              Vector<T, N> const &rhs) noexcept
+{
+  Vector<T, N> result{};
+  for (usize i = 0; i < N; ++i)
+  {
+    result[i] = std::min(lhs[i], rhs[i]);
+  }
+
+  return result;
+}
+
+template <Arithmetic T, usize N>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N> max(Vector<T, N> const &lhs,
+                                                              Vector<T, N> const &rhs) noexcept
+{
+  Vector<T, N> result{};
+  for (usize i = 0; i < N; ++i)
+  {
+    result[i] = std::max(lhs[i], rhs[i]);
+  }
+
+  return result;
+}
+
+template <Arithmetic T>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, 2> xy(Vector<T, 3> const &vector) noexcept
+{
+  return Vector<T, 2>{vector.x(), vector.y()};
+}
+
+template <Arithmetic T>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, 2> xz(Vector<T, 3> const &vector) noexcept
+{
+  return Vector<T, 2>{vector.x(), vector.z()};
+}
+
+template <Arithmetic T>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, 2> yz(Vector<T, 3> const &vector) noexcept
+{
+  return Vector<T, 2>{vector.y(), vector.z()};
+}
+
+template <Arithmetic T, usize N>
   requires(N > 0)
 [[nodiscard]] PBRT_INLINE constexpr typename Vector<T, N>::ConstReference Vector<T, N>::back()
     const noexcept
@@ -1743,23 +1850,49 @@ template <Arithmetic T, usize N>
   return m_data.back();
 }
 
-using Vec2u = Vector<u32, 2>;
-using Vec3u = Vector<u32, 3>;
-using Vec4u = Vector<u32, 4>;
+template <Arithmetic T>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, 3> xyz(Vector<T, 4> const &vector) noexcept
+{
+  return Vector<T, 3>{vector.x(), vector.y(), vector.z()};
+}
 
-using Vec2i = Vector<i32, 2>;
-using Vec3i = Vector<i32, 3>;
-using Vec4i = Vector<i32, 4>;
+template <>
+[[nodiscard]] PBRT_INLINE constexpr f32 Vector<f32, 2>::dot(Vector const &other) const noexcept
+{
+  return (m_data[0] * other.m_data[0]) + (m_data[1] * other.m_data[1]);
+}
 
-using Vec2f = Vector<f32, 2>;
-using Vec3f = Vector<f32, 3>;
-using Vec4f = Vector<f32, 4>;
+template <>
+[[nodiscard]] PBRT_INLINE constexpr f64 Vector<f64, 2>::dot(Vector const &other) const noexcept
+{
+  return (m_data[0] * other.m_data[0]) + (m_data[1] * other.m_data[1]);
+}
 
-using Vec2d = Vector<f64, 2>;
-using Vec3d = Vector<f64, 3>;
-using Vec4d = Vector<f64, 4>;
+template <>
+[[nodiscard]] PBRT_INLINE constexpr f32 Vector<f32, 3>::dot(Vector const &other) const noexcept
+{
+  return (m_data[0] * other.m_data[0]) + (m_data[1] * other.m_data[1]) +
+         (m_data[2] * other.m_data[2]);
+}
 
-using Vec2 = Vec2f;
-using Vec3 = Vec3f;
-using Vec4 = Vec4f;
+template <>
+[[nodiscard]] PBRT_INLINE constexpr f64 Vector<f64, 3>::dot(Vector const &other) const noexcept
+{
+  return (m_data[0] * other.m_data[0]) + (m_data[1] * other.m_data[1]) +
+         (m_data[2] * other.m_data[2]);
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr f32 Vector<f32, 4>::dot(Vector const &other) const noexcept
+{
+  return (m_data[0] * other.m_data[0]) + (m_data[1] * other.m_data[1]) +
+         (m_data[2] * other.m_data[2]) + (m_data[3] * other.m_data[3]);
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr f64 Vector<f64, 4>::dot(Vector const &other) const noexcept
+{
+  return (m_data[0] * other.m_data[0]) + (m_data[1] * other.m_data[1]) +
+         (m_data[2] * other.m_data[2]) + (m_data[3] * other.m_data[3]);
+}
 } // namespace pbrt::math
