@@ -557,13 +557,13 @@ template <FloatingPoint T, usize N>
 }
 
 template <FloatingPoint T>
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr T radians(T degrees) noexcept
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr T radians(T const &degrees) noexcept
 {
   return degrees * (PI<T> / T(180));
 }
 
 template <FloatingPoint T>
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr T degrees(T radians) noexcept
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr T degrees(T const &radians) noexcept
 {
   return radians * (T(180) / PI<T>);
 }
