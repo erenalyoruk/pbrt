@@ -3,4 +3,5 @@ target_sources(
   PRIVATE
     "vector.cpp"
     "matrix.cpp"
+    "matrix_transform.cpp"
 )
