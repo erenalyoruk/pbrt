@@ -68,4 +68,22 @@ constexpr T ZERO_EPSILON{1e-8};
  */
 template <FloatingPoint T, i8 Exponent = -6>
 constexpr T EPSILON_E{T{1} * std::pow(T{10}, Exponent)};
+
+/**
+ * @brief Square root of 2 constant.
+ *
+ * @tparam T Floating-point type (e.g., float, double)
+ */
+template <FloatingPoint T>
+constexpr T SQRT_2{std::numbers::sqrt2_v<T>};
+
+/**
+ * @brief Square root of 2 divided by 2 constant.
+ *
+ * This is often used in graphics and geometry calculations.
+ *
+ * @tparam T Floating-point type (e.g., float, double)
+ */
+template <FloatingPoint T>
+constexpr T SQRT_HALF_2{std::numbers::sqrt2_v<T> / T{2}};
 } // namespace pbrt::math
