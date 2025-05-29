@@ -2,6 +2,7 @@
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <pbrt/assertions.hpp>
+#include <pbrt/math/constants.hpp>
 #include <pbrt/math/vector.hpp>
 #include <pbrt/types.hpp>
 
@@ -308,19 +309,19 @@ TEMPLATE_TEST_CASE("Vector floating point features", "[math][vector][template]",
 
     if constexpr (std::is_same_v<TestType, f32>)
     {
-      Vec2T v1{static_cast<TestType>(1.0), static_cast<TestType>(2.001)};
+      Vec2T v1{static_cast<TestType>(1.0), static_cast<TestType>(2.0001)};
 
       REQUIRE_FALSE(v1 == v2);
-      REQUIRE(v1.approx_equal(v2, static_cast<TestType>(1e-3)));
-      REQUIRE_FALSE(v1.approx_equal(v2, static_cast<TestType>(1e-6)));
+      REQUIRE(v1.approx_equal(v2, pbrt::math::LOOSE_EPSILON<TestType>));
+      REQUIRE_FALSE(v1.approx_equal(v2, pbrt::math::EPSILON<TestType>));
     }
     else
     {
       Vec2T v1{static_cast<TestType>(1.0), static_cast<TestType>(2.0000001)};
 
       REQUIRE_FALSE(v1 == v2);
-      REQUIRE(v1.approx_equal(v2, static_cast<TestType>(1e-6)));
-      REQUIRE_FALSE(v1.approx_equal(v2, static_cast<TestType>(1e-8)));
+      REQUIRE(v1.approx_equal(v2, pbrt::math::EPSILON<TestType>));
+      REQUIRE_FALSE(v1.approx_equal(v2, pbrt::math::ZERO_EPSILON<TestType>));
     }
   }
 

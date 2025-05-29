@@ -3,6 +3,7 @@
 #include "pbrt/assertions.hpp"
 #include "pbrt/export.hpp"
 #include "pbrt/inline.hpp"
+#include "pbrt/math/constants.hpp"
 #include "pbrt/math/traits.hpp"
 #include "pbrt/math/vector.hpp"
 #include "pbrt/types.hpp"
@@ -287,8 +288,8 @@ public:
    * @param epsilon The tolerance for approximate equality. It must be convertible to T.
    * @return true if the matrices are approximately equal, false otherwise.
    */
-  [[nodiscard]] PBRT_INLINE constexpr bool approx_equal(Matrix const &other,
-                                                        T const &epsilon = T{1e-6}) const noexcept
+  [[nodiscard]] PBRT_INLINE constexpr bool approx_equal(
+      Matrix const &other, T const &epsilon = EPSILON<T>) const noexcept
     requires FloatingPoint<T>;
 
   /**
@@ -484,7 +485,8 @@ private:
 
   [[nodiscard]] PBRT_INLINE constexpr SizeType index(SizeType row, SizeType col) const noexcept;
 
-  [[nodiscard]] PBRT_INLINE constexpr bool is_invertible(T const &epsilon = T{1e-10}) const noexcept
+  [[nodiscard]] PBRT_INLINE constexpr bool is_invertible(
+      T const &epsilon = PRECISION_EPSILON<T>) const noexcept
     requires(Rows == Cols && FloatingPoint<T>);
 
   template <usize OtherCols>
@@ -1059,7 +1061,7 @@ template <Arithmetic T, usize Rows, usize Cols>
       }
     }
 
-    if (maxVal < T{1e-12})
+    if (maxVal < PRECISION_EPSILON<T>)
     {
       return T{0};
     }
@@ -1431,7 +1433,7 @@ template <Arithmetic T>
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 1, 1> inverse(Matrix<T, 1, 1> const &matrix)
 {
   T det{matrix(0, 0)};
-  if (std::abs(det) <= T{1e-10}) [[unlikely]]
+  if (std::abs(det) <= PRECISION_EPSILON<T>) [[unlikely]]
   {
     throw std::domain_error{"Matrix is not invertible."};
   }
@@ -1449,7 +1451,7 @@ template <Arithmetic T>
   T d{matrix(1, 1)};
 
   T det{a * d - b * c};
-  if (std::abs(det) <= T{1e-10}) [[unlikely]]
+  if (std::abs(det) <= PRECISION_EPSILON<T>) [[unlikely]]
   {
     throw std::domain_error{"Matrix is not invertible."};
   }
@@ -1483,7 +1485,7 @@ template <Arithmetic T>
   T c22{m00 * m11 - m01 * m10};
 
   T det{m00 * c00 - m01 * c10 + m02 * c20};
-  if (std::abs(det) <= T{1e-10}) [[unlikely]]
+  if (std::abs(det) <= PRECISION_EPSILON<T>) [[unlikely]]
   {
     throw std::domain_error{"Matrix is not invertible."};
   }
@@ -1531,7 +1533,7 @@ template <Arithmetic T>
   T c0{m20 * m31 - m21 * m30};
 
   T det{s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0};
-  if (std::abs(det) <= T{1e-10}) [[unlikely]]
+  if (std::abs(det) <= PRECISION_EPSILON<T>) [[unlikely]]
   {
     throw std::domain_error{"Matrix is not invertible."};
   }

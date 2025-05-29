@@ -2,6 +2,7 @@
 
 #include "pbrt/assertions.hpp"
 #include "pbrt/inline.hpp"
+#include "pbrt/math/constants.hpp"
 #include "pbrt/math/traits.hpp"
 #include "pbrt/types.hpp"
 
@@ -318,7 +319,7 @@ public:
    * @return bool True if the vectors are approximately equal, false otherwise.
    */
   PBRT_INLINE constexpr bool approx_equal(Vector const &other,
-                                          T const &epsilon = T{1e-6}) const noexcept
+                                          T const &epsilon = PRECISION_EPSILON<T>) const noexcept
     requires FloatingPoint<T>;
 
   /**
@@ -1377,7 +1378,7 @@ template <Arithmetic T, usize N>
   requires FloatingPoint<T>
 {
   const T lenSq{length_squared()};
-  if (lenSq < T{1e-12})
+  if (lenSq < PRECISION_EPSILON<T>)
   {
     return fallback;
   }

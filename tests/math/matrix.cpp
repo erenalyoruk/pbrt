@@ -2,6 +2,7 @@
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <pbrt/assertions.hpp>
+#include <pbrt/math/constants.hpp>
 #include <pbrt/math/matrix.hpp>
 #include <pbrt/types.hpp>
 
@@ -374,10 +375,11 @@ TEMPLATE_TEST_CASE("Matrix determinant and inverse", "[math][matrix][template]",
     auto identity = m * inv;
 
     // Check if m * inv ≈ I
-    REQUIRE(identity(0, 0) == Catch::Approx(static_cast<TestType>(1)).margin(1e-6));
-    REQUIRE(identity(0, 1) == Catch::Approx(static_cast<TestType>(0)).margin(1e-6));
-    REQUIRE(identity(1, 0) == Catch::Approx(static_cast<TestType>(0)).margin(1e-6));
-    REQUIRE(identity(1, 1) == Catch::Approx(static_cast<TestType>(1)).margin(1e-6));
+    constexpr TestType epsilon{pbrt::math::EPSILON<TestType>};
+    REQUIRE(identity(0, 0) == Catch::Approx(static_cast<TestType>(1)).margin(epsilon));
+    REQUIRE(identity(0, 1) == Catch::Approx(static_cast<TestType>(0)).margin(epsilon));
+    REQUIRE(identity(1, 0) == Catch::Approx(static_cast<TestType>(0)).margin(epsilon));
+    REQUIRE(identity(1, 1) == Catch::Approx(static_cast<TestType>(1)).margin(epsilon));
   }
 
   SECTION("3x3 determinant and inverse")
@@ -398,7 +400,7 @@ TEMPLATE_TEST_CASE("Matrix determinant and inverse", "[math][matrix][template]",
       for (usize j = 0; j < 3; ++j)
       {
         TestType expected = (i == j) ? TestType{1} : TestType{0};
-        REQUIRE(identity(i, j) == Catch::Approx(expected).margin(1e-5));
+        REQUIRE(identity(i, j) == Catch::Approx(expected).margin(pbrt::math::EPSILON<TestType>));
       }
     }
   }
@@ -579,10 +581,11 @@ TEST_CASE("Matrix free functions", "[math][matrix]")
     auto inv = inverse(m);
     auto identity = m * inv;
 
-    REQUIRE(identity(0, 0) == Catch::Approx(1.0F).margin(1e-6F));
-    REQUIRE(identity(0, 1) == Catch::Approx(0.0F).margin(1e-6F));
-    REQUIRE(identity(1, 0) == Catch::Approx(0.0F).margin(1e-6F));
-    REQUIRE(identity(1, 1) == Catch::Approx(1.0F).margin(1e-6F));
+    constexpr f32 epsilon{pbrt::math::EPSILON<f32>};
+    REQUIRE(identity(0, 0) == Catch::Approx(1.0F).margin(epsilon));
+    REQUIRE(identity(0, 1) == Catch::Approx(0.0F).margin(epsilon));
+    REQUIRE(identity(1, 0) == Catch::Approx(0.0F).margin(epsilon));
+    REQUIRE(identity(1, 1) == Catch::Approx(1.0F).margin(epsilon));
   }
 
   SECTION("Free function transpose")
