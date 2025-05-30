@@ -2,8 +2,15 @@
 #include <pbrt/logging/log_level.hpp>
 #include <pbrt/logging/log_record.hpp>
 #include <pbrt/logging/logger.hpp>
+#include <pbrt/profiling/profiler.hpp>
 
 #include <print>
+#include <thread>
+
+namespace
+{
+void test_fn();
+}
 
 int main()
 {
@@ -31,15 +38,42 @@ int main()
       break;
     }
 
-    std::println("[{}] {} {}", level, record.message, record.location.file_name());
+    std::println("[{}] {}", level, record.message);
   });
 
-  PBRT_LOG_TRACE("Trace: {}", 0);
-  PBRT_LOG_DEBUG("Debug: {}", 1);
-  PBRT_LOG_INFO("Info: {}", 2);
-  PBRT_LOG_WARNING("Warning: {}", 3);
-  PBRT_LOG_ERROR("Error: {}", 4);
-  PBRT_LOG_CRITICAL("Critical: {}", 5);
+  auto &profiler{pbrt::profiling::Profiler::get_instance()};
+
+  profiler.begin_frame();
+
+  test_fn();
+
+  profiler.end_frame();
+
+  profiler.log_summary();
 
   return 0;
 }
+
+namespace
+{
+void test_fn()
+{
+  PBRT_PROFILE_FUNCTION();
+
+  PBRT_LOG_INFO("This is an info message from test_fn");
+  PBRT_LOG_DEBUG("This is a debug message from test_fn");
+
+  {
+    PBRT_PROFILE_SCOPE("Test");
+
+    for (int i = 0; i < 10; ++i)
+    {
+      PBRT_PROFILE_SCOPE("Loop iteration");
+
+      PBRT_LOG_DEBUG("Loop iteration {}", i);
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+  }
+}
+} // namespace

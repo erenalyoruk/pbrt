@@ -7,3 +7,4 @@ target_sources(
 add_subdirectory("debug")
 add_subdirectory("logging")
 add_subdirectory("ecs")
+add_subdirectory("profiling")

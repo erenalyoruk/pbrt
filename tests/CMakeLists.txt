@@ -34,6 +34,7 @@ target_sources(
 add_subdirectory("logging")
 add_subdirectory("ecs")
 add_subdirectory("math")
+add_subdirectory("profiling")
 
 include(CTest)
 include(Catch)
