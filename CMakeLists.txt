@@ -7,6 +7,7 @@ option(PBRT_BUILD_DOCS "Build docs" ON)
 option(PBRT_VERBOSE "Enable tracing" ON)
 option(PBRT_DISABLE_LOGGING "Disable logs" OFF)
 option(PBRT_DISABLE_PROFILING "Disable profiling" OFF)
+option(PBRT_DISABLE_EXCEPTIONS "Disable exceptions" OFF)
 
 project(pbrt LANGUAGES CXX VERSION 0.0.1)
 
@@ -37,6 +38,7 @@ target_compile_definitions(
     $<$<BOOL:${PBRT_VERBOSE}>:PBRT_VERBOSE>
     $<$<BOOL:${PBRT_DISABLE_LOGGING}>:PBRT_DISABLE_LOGGING>
     $<$<BOOL:${PBRT_DISABLE_PROFILING}>:PBRT_DISABLE_PROFILING>
+    $<$<BOOL:${PBRT_DISABLE_EXCEPTIONS}>:PBRT_DISABLE_EXCEPTIONS>
 
     # build definitions
     $<$<CONFIG:Debug>:PBRT_BUILD_DEBUG>

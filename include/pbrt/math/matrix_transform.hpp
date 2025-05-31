@@ -23,206 +23,6 @@ namespace pbrt::math
 template <FloatingPoint T, usize N>
   requires(N == 2 || N == 3)
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, N + 1, N + 1> translate(
-    Vector<T, N> const &translation) noexcept;
-
-/**
- * @brief Create a translation matrix from individual components.
- *
- * @tparam T Floating-point type
- * @tparam Args Component types (must be convertible to T)
- * @param args Translation components (2 for 2D, 3 for 3D)
- * @return Transformation matrix (3x3 for 2D, 4x4 for 3D)
- */
-template <FloatingPoint T, ConvertibleTo<T>... Args>
-  requires(sizeof...(Args) >= 2 && sizeof...(Args) <= 3)
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr auto translate(Args &&...args) noexcept;
-
-/**
- * @brief Create a uniform scaling matrix.
- *
- * @tparam T Floating-point type
- * @tparam N Dimension (2 for 2D, 3 for 3D)
- * @param scaleFactor Uniform scale factor
- * @return Transformation matrix (3x3 for 2D, 4x4 for 3D)
- */
-template <FloatingPoint T, usize N>
-  requires(N == 2 || N == 3)
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, N + 1, N + 1> scale(
-    T const &scaleFactor) noexcept;
-
-/**
- * @brief Create a uniform scaling matrix from a vector.
- *
- * @tparam T Floating-point type
- * @tparam N Dimension (2 for 2D, 3 for 3D)
- */
-template <FloatingPoint T, usize N>
-  requires(N == 2 || N == 3)
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, N + 1, N + 1> scale(
-    Vector<T, N> const &scale) noexcept;
-
-/**
- * @brief Create a uniform scaling matrix from individual components.
- *
- * @tparam T Floating-point type
- * @tparam Args Component types (must be convertible to T)
- * @param args Scale components (2 for 2D, 3 for 3D)
- * @return Transformation matrix (3x3 for 2D, 4x4 for 3D)
- */
-template <FloatingPoint T, ConvertibleTo<T>... Args>
-  requires(sizeof...(Args) >= 2 && sizeof...(Args) <= 3)
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr auto scale(Args &&...args) noexcept;
-
-/**
- * @brief Create a 2D rotation matrix
- *
- * @tparam T Floating-point type
- * @param angleRadians Rotation angle in radians
- * @return 3x3 transformation matrix for 2D rotation
- */
-template <FloatingPoint T>
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 3, 3> rotate(T const &angleRadians) noexcept;
-
-/**
- * @brief Create a 3D rotation matrix around X axis
- * @tparam T Floating-point type
- * @param angleRadians Rotation angle in radians
- * @return 4x4 transformation matrix for rotation around X axis
- */
-template <FloatingPoint T>
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 4, 4> rotate_x(
-    T const &angleRadians) noexcept;
-
-/**
- * @brief Create a 3D rotation matrix around Y axis
- * @tparam T Floating-point type
- * @param angleRadians Rotation angle in radians
- * @return 4x4 transformation matrix for rotation around Y axis
- */
-template <FloatingPoint T>
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 4, 4> rotate_y(
-    T const &angleRadians) noexcept;
-
-/**
- * @brief Create a 3D rotation matrix around Z axis
- * @tparam T Floating-point type
- * @param angleRadians Rotation angle in radians
- * @return 4x4 transformation matrix for rotation around Z axis
- */
-template <FloatingPoint T>
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 4, 4> rotate_z(
-    T const &angleRadians) noexcept;
-
-/**
- * @brief Create a 3D rotation matrix around arbitrary axis
- * @tparam T Floating-point type
- * @param axis Normalized rotation axis
- * @param angleRadians Rotation angle in radians
- * @return 4x4 transformation matrix for rotation around arbitrary axis
- */
-template <FloatingPoint T>
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 4, 4> rotate(Vector<T, 3> const &axis,
-                                                                    T const &angleRadians) noexcept;
-
-/**
- * @brief Create a look-at transformation matrix.
- *
- * @tparam T Floating-point type
- * @tparam System Coordinate system type (default is RightHanded)
- * @param eye Camera position in world coordinates
- * @param target Point the camera is looking at
- * @param up Up direction vector for the camera
- * @return Matrix<T, 4, 4> Look-at transformation matrix
- */
-template <FloatingPoint T, CoordinateSystem System = CoordinateSystem::RightHanded>
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 4, 4> look_at(
-    Vector<T, 3> const &eye, Vector<T, 3> const &target, Vector<T, 3> const &up) noexcept;
-
-/**
- * @brief Create a perspective projection matrix.
- *
- * @tparam T Floating-point type
- * @param fovRadians Field of view in radians
- * @param aspectRatio Aspect ratio (width / height)
- * @param nearPlane Distance to the near clipping plane
- * @param farPlane Distance to the far clipping plane
- * @return Matrix<T, 4, 4> Perspective projection matrix
- */
-template <FloatingPoint T>
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 4, 4> perspective(
-    T const &fovRadians, T const &aspectRatio, T const &nearPlane, T const &farPlane) noexcept;
-
-/**
- * @brief Create an orthographic projection matrix.
- *
- * @tparam T Floating-point type
- * @param left Left coordinate of the orthographic box
- * @param right Right coordinate of the orthographic box
- * @param bottom Bottom coordinate of the orthographic box
- * @param top Top coordinate of the orthographic box
- * @param nearPlane Distance to the near clipping plane
- * @param farPlane Distance to the far clipping plane
- * @return Matrix<T, 4, 4> Orthographic projection matrix
- */
-template <FloatingPoint T>
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 4, 4> orthographic(
-    T const &left, T const &right, T const &bottom, T const &top, T const &nearPlane,
-    T const &farPlane) noexcept;
-
-/**
- * @brief Extract translation component from transformation matrix
- *
- * @tparam T Floating-point type
- * @tparam N Dimension (3 for 3D, 4 for 4D)
- */
-template <FloatingPoint T, usize N>
-  requires(N == 3 || N == 4)
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N - 1> extract_translation(
-    Matrix<T, N, N> const &transform) noexcept;
-
-/**
- * @brief Extract scale component from transformation matrix
- *
- * @tparam T Floating-point type
- * @tparam N Dimension (3 for 3D, 4 for 4D)
- */
-template <FloatingPoint T, usize N>
-  requires(N == 3 || N == 4)
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N - 1> extract_scale(
-    Matrix<T, N, N> const &transform) noexcept;
-
-/**
- * @brief Check if matrix is affine transformation
- *
- * @tparam T Floating-point type
- * @tparam N Dimension (3 for 3D)
- */
-template <FloatingPoint T, usize N>
-  requires(N == 3 || N == 4)
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr bool is_affine(
-    Matrix<T, N, N> const &transform) noexcept;
-
-/**
- * @brief Convert degrees to radians
- * @tparam T Floating-point type
- * @param degrees Angle in degrees
- * @return Angle in radians
- */
-template <FloatingPoint T>
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr T radians(T const &degrees) noexcept;
-
-/**
- * @brief Convert radians to degrees
- * @tparam T Floating-point type
- * @param radians Angle in radians
- * @return Angle in degrees
- */
-template <FloatingPoint T>
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr T degrees(T const &radians) noexcept;
-
-template <FloatingPoint T, usize N>
-  requires(N == 2 || N == 3)
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, N + 1, N + 1> translate(
     Vector<T, N> const &translation) noexcept
 {
   auto result{Matrix<T, N + 1, N + 1>::identity()};
@@ -242,6 +42,14 @@ template <FloatingPoint T, usize N>
   return result;
 }
 
+/**
+ * @brief Create a translation matrix from individual components.
+ *
+ * @tparam T Floating-point type
+ * @tparam Args Component types (must be convertible to T)
+ * @param args Translation components (2 for 2D, 3 for 3D)
+ * @return Transformation matrix (3x3 for 2D, 4x4 for 3D)
+ */
 template <FloatingPoint T, ConvertibleTo<T>... Args>
   requires(sizeof...(Args) >= 2 && sizeof...(Args) <= 3)
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr auto translate(Args &&...args) noexcept
@@ -259,6 +67,14 @@ template <FloatingPoint T, ConvertibleTo<T>... Args>
   }
 }
 
+/**
+ * @brief Create a uniform scaling matrix.
+ *
+ * @tparam T Floating-point type
+ * @tparam N Dimension (2 for 2D, 3 for 3D)
+ * @param scaleFactor Uniform scale factor
+ * @return Transformation matrix (3x3 for 2D, 4x4 for 3D)
+ */
 template <FloatingPoint T, usize N>
   requires(N == 2 || N == 3)
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, N + 1, N + 1> scale(
@@ -281,6 +97,12 @@ template <FloatingPoint T, usize N>
   return result;
 }
 
+/**
+ * @brief Create a uniform scaling matrix from a vector.
+ *
+ * @tparam T Floating-point type
+ * @tparam N Dimension (2 for 2D, 3 for 3D)
+ */
 template <FloatingPoint T, usize N>
   requires(N == 2 || N == 3)
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, N + 1, N + 1> scale(
@@ -303,6 +125,14 @@ template <FloatingPoint T, usize N>
   return result;
 }
 
+/**
+ * @brief Create a uniform scaling matrix from individual components.
+ *
+ * @tparam T Floating-point type
+ * @tparam Args Component types (must be convertible to T)
+ * @param args Scale components (2 for 2D, 3 for 3D)
+ * @return Transformation matrix (3x3 for 2D, 4x4 for 3D)
+ */
 template <FloatingPoint T, ConvertibleTo<T>... Args>
   requires(sizeof...(Args) >= 2 && sizeof...(Args) <= 3)
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr auto scale(Args &&...args) noexcept
@@ -320,6 +150,13 @@ template <FloatingPoint T, ConvertibleTo<T>... Args>
   }
 }
 
+/**
+ * @brief Create a 2D rotation matrix
+ *
+ * @tparam T Floating-point type
+ * @param angleRadians Rotation angle in radians
+ * @return 3x3 transformation matrix for 2D rotation
+ */
 template <FloatingPoint T>
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 3, 3> rotate(T const &angleRadians) noexcept
 {
@@ -335,6 +172,12 @@ template <FloatingPoint T>
   return result;
 }
 
+/**
+ * @brief Create a 3D rotation matrix around X axis
+ * @tparam T Floating-point type
+ * @param angleRadians Rotation angle in radians
+ * @return 4x4 transformation matrix for rotation around X axis
+ */
 template <FloatingPoint T>
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 4, 4> rotate_x(
     T const &angleRadians) noexcept
@@ -351,6 +194,12 @@ template <FloatingPoint T>
   return result;
 }
 
+/**
+ * @brief Create a 3D rotation matrix around Y axis
+ * @tparam T Floating-point type
+ * @param angleRadians Rotation angle in radians
+ * @return 4x4 transformation matrix for rotation around Y axis
+ */
 template <FloatingPoint T>
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 4, 4> rotate_y(
     T const &angleRadians) noexcept
@@ -367,6 +216,12 @@ template <FloatingPoint T>
   return result;
 }
 
+/**
+ * @brief Create a 3D rotation matrix around Z axis
+ * @tparam T Floating-point type
+ * @param angleRadians Rotation angle in radians
+ * @return 4x4 transformation matrix for rotation around Z axis
+ */
 template <FloatingPoint T>
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 4, 4> rotate_z(
     T const &angleRadians) noexcept
@@ -383,6 +238,13 @@ template <FloatingPoint T>
   return result;
 }
 
+/**
+ * @brief Create a 3D rotation matrix around arbitrary axis
+ * @tparam T Floating-point type
+ * @param axis Normalized rotation axis
+ * @param angleRadians Rotation angle in radians
+ * @return 4x4 transformation matrix for rotation around arbitrary axis
+ */
 template <FloatingPoint T>
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 4, 4> rotate(Vector<T, 3> const &axis,
                                                                     T const &angleRadians) noexcept
@@ -407,7 +269,17 @@ template <FloatingPoint T>
   return result;
 }
 
-template <FloatingPoint T, CoordinateSystem System>
+/**
+ * @brief Create a look-at transformation matrix.
+ *
+ * @tparam T Floating-point type
+ * @tparam System Coordinate system type (default is RightHanded)
+ * @param eye Camera position in world coordinates
+ * @param target Point the camera is looking at
+ * @param up Up direction vector for the camera
+ * @return Matrix<T, 4, 4> Look-at transformation matrix
+ */
+template <FloatingPoint T, CoordinateSystem System = CoordinateSystem::RightHanded>
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 4, 4> look_at(
     Vector<T, 3> const &eye, Vector<T, 3> const &target, Vector<T, 3> const &up) noexcept
 {
@@ -460,6 +332,16 @@ template <FloatingPoint T, CoordinateSystem System>
   return result;
 }
 
+/**
+ * @brief Create a perspective projection matrix.
+ *
+ * @tparam T Floating-point type
+ * @param fovRadians Field of view in radians
+ * @param aspectRatio Aspect ratio (width / height)
+ * @param nearPlane Distance to the near clipping plane
+ * @param farPlane Distance to the far clipping plane
+ * @return Matrix<T, 4, 4> Perspective projection matrix
+ */
 template <FloatingPoint T>
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 4, 4> perspective(T const &fovRadians,
                                                                          T const &aspectRatio,
@@ -481,6 +363,18 @@ template <FloatingPoint T>
   return result;
 }
 
+/**
+ * @brief Create an orthographic projection matrix.
+ *
+ * @tparam T Floating-point type
+ * @param left Left coordinate of the orthographic box
+ * @param right Right coordinate of the orthographic box
+ * @param bottom Bottom coordinate of the orthographic box
+ * @param top Top coordinate of the orthographic box
+ * @param nearPlane Distance to the near clipping plane
+ * @param farPlane Distance to the far clipping plane
+ * @return Matrix<T, 4, 4> Orthographic projection matrix
+ */
 template <FloatingPoint T>
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 4, 4> orthographic(
     T const &left, T const &right, T const &bottom, T const &top, T const &nearPlane,
@@ -505,6 +399,12 @@ template <FloatingPoint T>
   return result;
 }
 
+/**
+ * @brief Extract translation component from transformation matrix
+ *
+ * @tparam T Floating-point type
+ * @tparam N Dimension (3 for 3D, 4 for 4D)
+ */
 template <FloatingPoint T, usize N>
   requires(N == 3 || N == 4)
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N - 1> extract_translation(
@@ -520,6 +420,12 @@ template <FloatingPoint T, usize N>
   }
 }
 
+/**
+ * @brief Extract scale component from transformation matrix
+ *
+ * @tparam T Floating-point type
+ * @tparam N Dimension (3 for 3D, 4 for 4D)
+ */
 template <FloatingPoint T, usize N>
   requires(N == 3 || N == 4)
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<T, N - 1> extract_scale(
@@ -540,6 +446,12 @@ template <FloatingPoint T, usize N>
   }
 }
 
+/**
+ * @brief Check if matrix is affine transformation
+ *
+ * @tparam T Floating-point type
+ * @tparam N Dimension (3 for 3D)
+ */
 template <FloatingPoint T, usize N>
   requires(N == 3 || N == 4)
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr bool is_affine(
@@ -556,12 +468,24 @@ template <FloatingPoint T, usize N>
   }
 }
 
+/**
+ * @brief Convert degrees to radians
+ * @tparam T Floating-point type
+ * @param degrees Angle in degrees
+ * @return Angle in radians
+ */
 template <FloatingPoint T>
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr T radians(T const &degrees) noexcept
 {
   return degrees * (PI<T> / T(180));
 }
 
+/**
+ * @brief Convert radians to degrees
+ * @tparam T Floating-point type
+ * @param radians Angle in radians
+ * @return Angle in degrees
+ */
 template <FloatingPoint T>
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr T degrees(T const &radians) noexcept
 {
