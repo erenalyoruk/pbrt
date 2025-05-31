@@ -229,14 +229,14 @@ template <FloatingPoint T, usize N>
 
   if constexpr (N == 2)
   {
-    result(0, 2) = translation.x;
-    result(1, 2) = translation.y;
+    result(0, 2) = translation.x();
+    result(1, 2) = translation.y();
   }
   else if constexpr (N == 3)
   {
-    result(0, 3) = translation.x;
-    result(1, 3) = translation.y;
-    result(2, 3) = translation.z;
+    result(0, 3) = translation.x();
+    result(1, 3) = translation.y();
+    result(2, 3) = translation.z();
   }
 
   return result;
@@ -290,14 +290,14 @@ template <FloatingPoint T, usize N>
 
   if constexpr (N == 2)
   {
-    result(0, 0) = scale.x;
-    result(1, 1) = scale.y;
+    result(0, 0) = scale.x();
+    result(1, 1) = scale.y();
   }
   else if constexpr (N == 3)
   {
-    result(0, 0) = scale.x;
-    result(1, 1) = scale.y;
-    result(2, 2) = scale.z;
+    result(0, 0) = scale.x();
+    result(1, 1) = scale.y();
+    result(2, 2) = scale.z();
   }
 
   return result;

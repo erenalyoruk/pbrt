@@ -67,7 +67,7 @@ constexpr T ZERO_EPSILON{1e-8};
  * @tparam Exponent The exponent to which 10 is raised, defaulting to -6.
  */
 template <FloatingPoint T, i8 Exponent = -6>
-constexpr T EPSILON_E{T{1} * std::pow(T{10}, Exponent)};
+const T EPSILON_E{T{1} * std::pow(T{10}, T{Exponent})};
 
 /**
  * @brief Square root of 2 constant.

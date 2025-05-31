@@ -26,7 +26,7 @@ PBRT_INLINE void assert_handler()
 void PBRT_API assertion_failed(std::string_view expression, std::source_location location);
 } // namespace pbrt
 
-#define PBRT_STATIC_ASSERT(expr, ...) static_assert(expr, ##__VA_ARGS__)
+#define PBRT_STATIC_ASSERT(expr, ...) static_assert(expr, __VA_ARGS__)
 
 #define PBRT_VERIFY(expr)                                                                          \
   ((expr) ? (void)0                                                                                \

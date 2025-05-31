@@ -4,4 +4,5 @@ target_sources(
     "vector.cpp"
     "matrix.cpp"
     "matrix_transform.cpp"
+    "quaternion.cpp"
 )
