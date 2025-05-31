@@ -3,6 +3,7 @@
 #include "pbrt/export.hpp"
 #include "pbrt/inline.hpp"
 #include "pbrt/math/constants.hpp"
+#include "pbrt/math/matrix.hpp"
 #include "pbrt/math/traits.hpp"
 #include "pbrt/math/vector.hpp"
 
@@ -478,10 +479,53 @@ public:
             sy * cp * cr - cy * sp * sr};
   }
 
+  /**
+   * @brief Create quaternion from axis-angle representation.
+   *
+   * @param axis Normalized rotation axis (must be unit length)
+   * @param angleRadians Rotation angle in radians
+   * @return Quaternion representing the rotation
+   */
   [[nodiscard]] PBRT_INLINE static constexpr Quaternion from_axis_angle(VectorType const &axis,
                                                                         T const &angleRadians)
   {
     return {axis, angleRadians};
+  }
+
+  /**
+   * @brief Convert quaternion to a 4x4 rotation matrix.
+   *
+   * @return Matrix<T, 4, 4> Matrix that represents the rotation
+   */
+  [[nodiscard]] PBRT_INLINE constexpr Matrix<T, 4, 4> to_matrix() const noexcept
+  {
+    const T w2{m_components[0] * m_components[0]};
+    const T x2{m_components[1] * m_components[1]};
+    const T y2{m_components[2] * m_components[2]};
+    const T z2{m_components[3] * m_components[3]};
+
+    const T wx{m_components[0] * m_components[1]};
+    const T wy{m_components[0] * m_components[2]};
+    const T wz{m_components[0] * m_components[3]};
+    const T xy{m_components[1] * m_components[2]};
+    const T xz{m_components[1] * m_components[3]};
+    const T yz{m_components[2] * m_components[3]};
+
+    auto result{Matrix<T, 4, 4>::identity()};
+
+    result(0, 0) = w2 + x2 - y2 - z2;
+    result(0, 1) = T{2} * (xy - wz);
+    result(0, 2) = T{2} * (xz + wy);
+
+    result(1, 0) = T{2} * (xy + wz);
+    result(1, 1) = w2 - x2 + y2 - z2;
+    result(1, 2) = T{2} * (yz - wx);
+
+    result(2, 0) = T{2} * (xz - wy);
+    result(2, 1) = T{2} * (yz + wx);
+    result(2, 2) = w2 - x2 - y2 + z2;
+
+    return result;
   }
 
 private:
@@ -540,6 +584,45 @@ template <FloatingPoint T>
   const T s1{sinTheta / sinTheta0};
 
   return (s0 * q1) + (s1 * q2Adjusted);
+}
+
+/**
+ * @brief Create rotation matrix from quaternion.
+ *
+ * @tparam T Floating-point type
+ * @param q Quaternion representing the rotation
+ * @return Matrix<T, 4, 4> 4x4 rotation matrix
+ */
+template <FloatingPoint T>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, 4, 4> rotate(Quaternion<T> const &q) noexcept
+{
+  const T w2{q.w() * q.w()};
+  const T x2{q.x() * q.x()};
+  const T y2{q.y() * q.y()};
+  const T z2{q.z() * q.z()};
+
+  const T wx{q.w() * q.x()};
+  const T wy{q.w() * q.y()};
+  const T wz{q.w() * q.z()};
+  const T xy{q.x() * q.y()};
+  const T xz{q.x() * q.z()};
+  const T yz{q.y() * q.z()};
+
+  auto result{Matrix<T, 4, 4>::identity()};
+
+  result(0, 0) = w2 + x2 - y2 - z2;
+  result(0, 1) = T{2} * (xy - wz);
+  result(0, 2) = T{2} * (xz + wy);
+
+  result(1, 0) = T{2} * (xy + wz);
+  result(1, 1) = w2 - x2 + y2 - z2;
+  result(1, 2) = T{2} * (yz - wx);
+
+  result(2, 0) = T{2} * (xz - wy);
+  result(2, 1) = T{2} * (yz + wx);
+  result(2, 2) = w2 - x2 - y2 + z2;
+
+  return result;
 }
 
 using Quatf = Quaternion<float>;

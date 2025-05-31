@@ -3,3 +3,5 @@ target_sources(
   PRIVATE
     "scene.cpp"
 )
+
+add_subdirectory("components")
