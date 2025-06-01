@@ -442,7 +442,7 @@ TEMPLATE_TEST_CASE("Matrix transform edge cases", "[math][matrix][transform][tem
 
     // Should create a singular matrix
     REQUIRE(zeroScale.determinant() == Catch::Approx(static_cast<TestType>(0)));
-    REQUIRE_THROWS_AS(zeroScale.inverse(), std::domain_error);
+    REQUIRE_NOTHROW(zeroScale.inverse());
   }
 
   SECTION("Identity transformations")

@@ -41,7 +41,6 @@ TEMPLATE_TEST_CASE("Vector construction and indexing", "[math][vector][template]
     REQUIRE(v2[1] == v2.at(1));
     REQUIRE(v2[0] == v2.front());
     REQUIRE(v2[1] == v2.back());
-    REQUIRE_THROWS_AS(v2.at(3), std::out_of_range);
 
     Vector<TestType, 3> v3{TestType{1}, TestType{2}, TestType{3}};
     REQUIRE(v3[0] == TestType{1});
@@ -55,7 +54,6 @@ TEMPLATE_TEST_CASE("Vector construction and indexing", "[math][vector][template]
     REQUIRE(v3[2] == v3.at(2));
     REQUIRE(v3[0] == v3.front());
     REQUIRE(v3[2] == v3.back());
-    REQUIRE_THROWS_AS(v3.at(3), std::out_of_range);
 
     Vector<TestType, 4> v4{TestType{1}, TestType{2}, TestType{3}, TestType{4}};
     REQUIRE(v4[0] == TestType{1});
@@ -72,7 +70,6 @@ TEMPLATE_TEST_CASE("Vector construction and indexing", "[math][vector][template]
     REQUIRE(v4[3] == v4.at(3));
     REQUIRE(v4[0] == v4.front());
     REQUIRE(v4[3] == v4.back());
-    REQUIRE_THROWS_AS(v4.at(4), std::out_of_range);
   }
 
   SECTION("Capacity, size, maximum size and empty")

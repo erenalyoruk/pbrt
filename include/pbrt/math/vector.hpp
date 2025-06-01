@@ -10,7 +10,6 @@
 #include <array>
 #include <cmath>
 #include <numeric>
-#include <stdexcept>
 
 namespace pbrt::math
 {
@@ -74,6 +73,7 @@ public:
    */
   [[nodiscard]] PBRT_INLINE constexpr Reference operator[](SizeType index) noexcept
   {
+    PBRT_ASSERT_MSG(index < N, "Vector index out of bounds.");
     return m_data[index];
   }
 
@@ -85,6 +85,7 @@ public:
    */
   [[nodiscard]] PBRT_INLINE constexpr ConstReference operator[](SizeType index) const noexcept
   {
+    PBRT_ASSERT_MSG(index < N, "Vector index out of bounds.");
     return m_data[index];
   }
 
@@ -93,15 +94,10 @@ public:
    *
    * @param index The index of the element to access.
    * @return Reference The element at the specified index.
-   * @throw std::out_of_range If the index is out of bounds.
    */
   [[nodiscard]] PBRT_INLINE constexpr Reference at(SizeType index)
   {
-    if (index >= N) [[unlikely]]
-    {
-      throw std::out_of_range{"Index out of bounds."};
-    }
-
+    PBRT_ASSERT_MSG(index < N, "Index out of bounds.");
     return m_data[index];
   }
 
@@ -110,15 +106,10 @@ public:
    *
    * @param index The index of the element to access.
    * @return ConstReference The element at the specified index.
-   * @throw std::out_of_range If the index is out of bounds.
    */
-  [[nodiscard]] PBRT_INLINE constexpr ConstReference at(SizeType index) const
+  [[nodiscard]] PBRT_INLINE constexpr ConstReference at(SizeType index) const noexcept
   {
-    if (index >= N) [[unlikely]]
-    {
-      throw std::out_of_range{"Index out of bounds."};
-    }
-
+    PBRT_ASSERT_MSG(index < N, "Index out of bounds.");
     return m_data[index];
   }
 
@@ -311,15 +302,14 @@ public:
    *
    * @param other The vector to divide by.
    * @return Vector& A reference to this vector.
-   * @throw std::domain_error If any element of the other vector is zero.
    */
-  PBRT_INLINE constexpr Vector &operator/=(Vector const &other)
+  PBRT_INLINE constexpr Vector &operator/=(Vector const &other) noexcept
   {
     for (SizeType i = 0; i < N; ++i)
     {
       if (other.m_data[i] == T{0}) [[unlikely]]
       {
-        throw std::domain_error{"Division by zero in vector division."};
+        continue;
       }
 
       m_data[i] /= other.m_data[i];
@@ -333,13 +323,12 @@ public:
    *
    * @param scalar The scalar to divide by.
    * @return Vector& A reference to this vector.
-   * @throw std::domain_error If the scalar is zero.
    */
-  PBRT_INLINE constexpr Vector &operator/=(T const &scalar)
+  PBRT_INLINE constexpr Vector &operator/=(T const &scalar) noexcept
   {
     if (scalar == T{0}) [[unlikely]]
     {
-      throw std::domain_error{"Division by zero in vector division."};
+      return *this;
     }
 
     for (SizeType i = 0; i < N; ++i)
@@ -449,9 +438,8 @@ public:
    *
    * @param other The vector to divide by.
    * @return Vector A new vector that is the quotient of this vector and the other vector.
-   * @throw std::domain_error If any element of the other vector is zero.
    */
-  PBRT_INLINE constexpr Vector operator/(Vector const &other) const
+  PBRT_INLINE constexpr Vector operator/(Vector const &other) const noexcept
   {
     Vector result{*this};
     result /= other;
@@ -463,9 +451,8 @@ public:
    *
    * @param scalar The scalar to divide by.
    * @return Vector A new vector that is the quotient of this vector and the scalar.
-   * @throw std::domain_error If the scalar is zero.
    */
-  PBRT_INLINE constexpr Vector operator/(T const &scalar) const
+  PBRT_INLINE constexpr Vector operator/(T const &scalar) const noexcept
   {
     Vector result{*this};
     result /= scalar;

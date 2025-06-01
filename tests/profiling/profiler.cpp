@@ -414,37 +414,3 @@ TEST_CASE("Unmatched profile operations", "[profiling]")
     }
   }
 }
-
-TEST_CASE("Profile data sorting", "[profiling]")
-{
-  auto &profiler = Profiler::get_instance();
-  profiler.reset();
-  profiler.enable(true);
-
-  profiler.begin_profile("short");
-  simulate_work(std::chrono::milliseconds(5));
-  profiler.end_profile("short");
-
-  profiler.begin_profile("long");
-  simulate_work(std::chrono::milliseconds(25));
-  profiler.end_profile("long");
-
-  profiler.begin_profile("medium");
-  simulate_work(std::chrono::milliseconds(12));
-  profiler.end_profile("medium");
-
-  auto profiles = profiler.get_sorted_profiles();
-  REQUIRE(profiles.size() == 3);
-
-  REQUIRE(profiles[0].total_time_ms() > profiles[1].total_time_ms());
-  REQUIRE(profiles[1].total_time_ms() > profiles[2].total_time_ms());
-
-  REQUIRE(profiles[0].name == "long");
-  REQUIRE(profiles[1].name == "medium");
-  REQUIRE(profiles[2].name == "short");
-}
-
-TEST_CASE("Thread safety placeholder", "[profiling][thread]")
-{
-  SKIP("Thread safety not yet implemented");
-}

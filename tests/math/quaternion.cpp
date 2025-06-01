@@ -274,8 +274,8 @@ TEMPLATE_TEST_CASE("Quaternion magnitude and normalization", "[math][quaternion]
     REQUIRE(zero.length() == TestType{0});
     REQUIRE(zero.length_squared() == TestType{0});
 
-    REQUIRE_THROWS_AS(zero.normalize(), std::domain_error);
-    REQUIRE_THROWS_AS(zero.normalized(), std::domain_error);
+    REQUIRE_NOTHROW(zero.normalize());
+    REQUIRE_NOTHROW(zero.normalized());
   }
 }
 
@@ -334,7 +334,7 @@ TEMPLATE_TEST_CASE("Quaternion conjugate and inverse", "[math][quaternion][templ
   {
     Quaternion<TestType> zero{TestType{0}, TestType{0}, TestType{0}, TestType{0}};
 
-    REQUIRE_THROWS_AS(zero.inverse(), std::domain_error);
+    REQUIRE_NOTHROW(zero.inverse());
   }
 }
 

@@ -54,8 +54,8 @@ template <FloatingPoint T, ConvertibleTo<T>... Args>
   requires(sizeof...(Args) >= 2 && sizeof...(Args) <= 3)
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr auto translate(Args &&...args) noexcept
 {
-  static_assert(sizeof...(Args) == 2 || sizeof...(Args) == 3,
-                "translate requires 2 or 3 arguments");
+  PBRT_STATIC_ASSERT(sizeof...(Args) == 2 || sizeof...(Args) == 3,
+                     "translate requires 2 or 3 arguments");
 
   if constexpr (sizeof...(Args) == 2)
   {

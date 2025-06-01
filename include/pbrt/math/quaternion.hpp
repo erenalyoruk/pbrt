@@ -8,7 +8,6 @@
 #include "pbrt/math/vector.hpp"
 
 #include <array>
-#include <stdexcept>
 
 namespace pbrt::math
 {
@@ -65,15 +64,9 @@ public:
    *
    * @param axis Normalized rotation axis
    * @param angleRadians Rotation angle in radians
-   * @throws std::domain_error if axis is not normalized
    */
   PBRT_INLINE constexpr Quaternion(VectorType const &axis, T const &angleRadians)
   {
-    if (std::abs(axis.length() - T{1}) > EPSILON<T>)
-    {
-      throw std::domain_error("Axis must be normalized");
-    }
-
     const T halfAngle{angleRadians / T{2}};
     const T sinHalf{std::sin(halfAngle)};
 
@@ -366,15 +359,13 @@ public:
 
   /**
    * @brief Normalize this quaternion in place.
-   *
-   * @throws std::domain_error if the quaternion is zero (length is zero).
    */
   PBRT_INLINE constexpr void normalize()
   {
     const T len{length()};
     if (len <= EPSILON<T>)
     {
-      throw std::domain_error("Cannot normalize zero quaternion");
+      return;
     }
 
     const T invLen{T{1} / len};
@@ -404,15 +395,13 @@ public:
 
   /**
    * @brief Return the inverse of this quaternion.
-   *
-   * @throws std::domain_error if the quaternion is zero (length is zero).
    */
   [[nodiscard]] PBRT_INLINE constexpr Quaternion inverse() const
   {
     const T lenSquared{length_squared()};
     if (lenSquared <= EPSILON<T>)
     {
-      throw std::domain_error("Cannot invert zero quaternion");
+      return Quaternion{0, 0, 0, 0};
     }
 
     const T invLenSq = T{1} / lenSquared;

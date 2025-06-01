@@ -9,7 +9,6 @@
 #include "pbrt/types.hpp"
 
 #include <array>
-#include <stdexcept>
 
 namespace pbrt::math
 {
@@ -83,9 +82,7 @@ public:
    */
   [[nodiscard]] PBRT_INLINE constexpr Reference operator()(SizeType row, SizeType col) noexcept
   {
-    PBRT_ASSERT_MSG(row < Rows, "Row index out of bounds.");
-    PBRT_ASSERT_MSG(col < Cols, "Column index out of bounds.");
-
+    PBRT_ASSERT_MSG(row < Rows || col < Cols, "Matrix indices out of bounds.");
     return m_data[index(row, col)];
   }
 
@@ -99,6 +96,7 @@ public:
   [[nodiscard]] PBRT_INLINE constexpr ConstReference operator()(SizeType row,
                                                                 SizeType col) const noexcept
   {
+    PBRT_ASSERT_MSG(row < Rows || col < Cols, "Matrix indices out of bounds.");
     return m_data[index(row, col)];
   }
 
@@ -109,15 +107,10 @@ public:
    * @param row The row index of the element to access. It must be less than Rows.
    * @param col The column index of the element to access. It must be less than Cols.
    * @return Reference Reference The element at the specified row and column indices.
-   * @throws std::out_of_range If the row or column index is out of bounds.
    */
-  [[nodiscard]] PBRT_INLINE constexpr Reference at(SizeType row, SizeType col)
+  [[nodiscard]] PBRT_INLINE constexpr Reference at(SizeType row, SizeType col) noexcept
   {
-    if (row >= Rows || col >= Cols) [[unlikely]]
-    {
-      throw std::out_of_range{"Matrix indices out of bounds."};
-    }
-
+    PBRT_ASSERT_MSG(row < Rows || col < Cols, "Matrix indices out of bounds.");
     return (*this)(row, col);
   }
 
@@ -128,15 +121,10 @@ public:
    * @param row The row index of the element to access. It must be less than Rows.
    * @param col The column index of the element to access. It must be less than Cols.
    * @return ConstReference The element at the specified row and column indices.
-   * @throws std::out_of_range If the row or column index is out of bounds.
    */
-  [[nodiscard]] PBRT_INLINE constexpr ConstReference at(SizeType row, SizeType col) const
+  [[nodiscard]] PBRT_INLINE constexpr ConstReference at(SizeType row, SizeType col) const noexcept
   {
-    if (row >= Rows || col >= Cols) [[unlikely]]
-    {
-      throw std::out_of_range{"Matrix indices out of bounds."};
-    }
-
+    PBRT_ASSERT_MSG(row < Rows || col < Cols, "Matrix indices out of bounds.");
     return (*this)(row, col);
   }
 
@@ -258,14 +246,14 @@ public:
    *
    * @param scalar The scalar value to divide each element of the matrix by. It must be convertible
    * to T and not equal to zero.
-   * @return Matrix & A reference to this matrix after the division.
-   * @throws std::domain_error If the scalar is zero.
+   * @return Matrix & A reference to this matrix after the division. If the scalar is zero, it
+   * returns a matrix filled with zeros.
    */
-  PBRT_INLINE constexpr Matrix &operator/=(T const &scalar)
+  PBRT_INLINE constexpr Matrix &operator/=(T const &scalar) noexcept
   {
     if (scalar == T{0}) [[unlikely]]
     {
-      throw std::domain_error{"Division by zero in matrix division."};
+      return *this;
     }
 
     for (SizeType i = 0; i < size(); ++i)
@@ -443,9 +431,8 @@ public:
    * to T and not equal to zero.
    * @return Matrix A new matrix that is the result of dividing each element of this matrix by the
    * scalar value.
-   * @throws std::domain_error If the scalar is zero.
    */
-  [[nodiscard]] PBRT_INLINE constexpr Matrix operator/(T const &scalar) const
+  [[nodiscard]] PBRT_INLINE constexpr Matrix operator/(T const &scalar) const noexcept
   {
     Matrix result{*this};
     result /= scalar;
@@ -626,7 +613,7 @@ public:
    *
    * @return Matrix A new matrix that is the inverse of this matrix.
    */
-  [[nodiscard]] PBRT_INLINE constexpr Matrix inverse() const
+  [[nodiscard]] PBRT_INLINE constexpr Matrix inverse() const noexcept
     requires(Rows == Cols && FloatingPoint<T>)
   {
     if constexpr (Rows == 1)
@@ -982,18 +969,18 @@ private:
     }
   }
 
-  [[nodiscard]] PBRT_INLINE constexpr Matrix inverse_1() const
+  [[nodiscard]] PBRT_INLINE constexpr Matrix inverse_1() const noexcept
   {
     T det{(*this)(0, 0)};
     if (std::abs(det) <= PRECISION_EPSILON<T>) [[unlikely]]
     {
-      throw std::domain_error{"Matrix is not invertible."};
+      return {};
     }
 
     return {T{1} / det};
   }
 
-  [[nodiscard]] PBRT_INLINE constexpr Matrix inverse_2() const
+  [[nodiscard]] PBRT_INLINE constexpr Matrix inverse_2() const noexcept
   {
     T a{(*this)(0, 0)};
     T b{(*this)(0, 1)};
@@ -1003,14 +990,14 @@ private:
     T det{a * d - b * c};
     if (std::abs(det) <= PRECISION_EPSILON<T>) [[unlikely]]
     {
-      throw std::domain_error{"Matrix is not invertible."};
+      return {};
     }
 
     T inverseDet{T{1} / det};
     return {d * inverseDet, -b * inverseDet, -c * inverseDet, a * inverseDet};
   }
 
-  [[nodiscard]] PBRT_INLINE constexpr Matrix inverse_3() const
+  [[nodiscard]] PBRT_INLINE constexpr Matrix inverse_3() const noexcept
   {
     T m00{(*this)(0, 0)};
     T m01{(*this)(0, 1)};
@@ -1035,7 +1022,7 @@ private:
     T det{m00 * c00 - m01 * c10 + m02 * c20};
     if (std::abs(det) <= PRECISION_EPSILON<T>) [[unlikely]]
     {
-      throw std::domain_error{"Matrix is not invertible."};
+      return {};
     }
 
     T inverseDet{T{1} / det};
@@ -1045,7 +1032,7 @@ private:
             c02 * inverseDet,  -c12 * inverseDet, c22 * inverseDet};
   }
 
-  [[nodiscard]] PBRT_INLINE constexpr Matrix inverse_4() const
+  [[nodiscard]] PBRT_INLINE constexpr Matrix inverse_4() const noexcept
   {
     T m00{(*this)(0, 0)};
     T m01{(*this)(0, 1)};
@@ -1081,7 +1068,7 @@ private:
     T det{s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0};
     if (std::abs(det) <= PRECISION_EPSILON<T>) [[unlikely]]
     {
-      throw std::domain_error{"Matrix is not invertible."};
+      return {};
     }
 
     T inverseDet{T{1} / det};
@@ -1108,7 +1095,7 @@ private:
   }
 
   // NOLINTNEXTLINE
-  [[nodiscard]] PBRT_INLINE constexpr Matrix inverse_n() const
+  [[nodiscard]] PBRT_INLINE constexpr Matrix inverse_n() const noexcept
     requires(Rows == Cols && FloatingPoint<T>)
   {
     Matrix<T, Rows, Rows * 2> augmented{};
@@ -1139,7 +1126,7 @@ private:
 
       if (maxVal <= PRECISION_EPSILON<T>) [[unlikely]]
       {
-        throw std::domain_error{"Matrix is not invertible."};
+        return {};
       }
 
       if (pivotRow != i)
@@ -1242,7 +1229,8 @@ template <Arithmetic T, usize N>
  */
 template <Arithmetic T, usize N>
   requires(N > 0 && FloatingPoint<T>)
-[[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, N, N> inverse(Matrix<T, N, N> const &matrix)
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Matrix<T, N, N> inverse(
+    Matrix<T, N, N> const &matrix) noexcept
 {
   return matrix.inverse();
 }
