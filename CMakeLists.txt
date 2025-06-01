@@ -8,6 +8,7 @@ option(PBRT_VERBOSE "Enable tracing" ON)
 option(PBRT_DISABLE_LOGGING "Disable logs" OFF)
 option(PBRT_DISABLE_PROFILING "Disable profiling" OFF)
 option(PBRT_DISABLE_EXCEPTIONS "Disable exceptions" OFF)
+option(PBRT_DISABLE_SIMD "Disable SIMD optimizations" OFF)
 
 project(pbrt LANGUAGES CXX VERSION 0.0.1)
 
@@ -32,6 +33,49 @@ if(PBRT_DISABLE_LOGGING)
   message(STATUS "Logging is disabled")
 endif()
 
+if(NOT PBRT_DISABLE_SIMD)
+  include (CheckCXXCompilerFlag)
+
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    check_cxx_compiler_flag("-mavx2" COMPILER_HAS_AVX2)
+    if(COMPILER_HAS_AVX2)
+      set(PBRT_HAS_AVX2 ON)
+      add_compile_definitions(PBRT_HAS_AVX2)
+      add_compile_options(-mavx2)
+    endif()
+
+    check_cxx_compiler_flag("-msse4.1" COMPILER_HAS_SSE41)
+    if(COMPILER_HAS_SSE41)
+      set(PBRT_HAS_SSE41 ON)
+      add_compile_definitions(PBRT_HAS_SSE41)
+      add_compile_options(-msse4.1)
+    endif()
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    check_cxx_compiler_flag("/arch:AVX2" COMPILER_HAS_AVX2)
+    if(COMPILER_HAS_AVX2)
+      set(PBRT_HAS_AVX2 ON)
+      add_compile_definitions(PBRT_HAS_AVX2)
+      add_compile_options(/arch:AVX2)
+    endif()
+
+    check_cxx_compiler_flag("/arch:SSE2" COMPILER_HAS_SSE2)
+    if(COMPILER_HAS_SSE2)
+      set(PBRT_HAS_SSE41 ON)
+      add_compile_definitions(PBRT_HAS_SSE41)
+    endif()
+  endif()
+endif()
+
+if (PBRT_HAS_AVX2)
+  add_compile_definitions(PBRT_SIMD_LEVEL_AVX2)
+elseif (PBRT_HAS_SSE41)
+  add_compile_definitions(PBRT_SIMD_LEVEL_SSE41)
+else()
+  add_compile_definitions(PBRT_SIMD_LEVEL_NONE)
+endif()
+
+message(STATUS "SIMD: SSE4.1=${PBRT_HAS_SSE41}, AVX=${PBRT_HAS_AVX}, NEON=${PBRT_HAS_NEON}")
+
 target_compile_definitions(
   pbrt
   PUBLIC
@@ -39,6 +83,7 @@ target_compile_definitions(
     $<$<BOOL:${PBRT_DISABLE_LOGGING}>:PBRT_DISABLE_LOGGING>
     $<$<BOOL:${PBRT_DISABLE_PROFILING}>:PBRT_DISABLE_PROFILING>
     $<$<BOOL:${PBRT_DISABLE_EXCEPTIONS}>:PBRT_DISABLE_EXCEPTIONS>
+    $<$<BOOL:${PBRT_DISABLE_SIMD}>:PBRT_DISABLE_SIMD>
 
     # build definitions
     $<$<CONFIG:Debug>:PBRT_BUILD_DEBUG>

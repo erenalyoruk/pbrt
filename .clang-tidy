@@ -14,7 +14,8 @@ Checks: >
   -modernize-use-trailing-return-type,
   -readability-identifier-length,
   -bugprone-easily-swappable-parameters,
-  -modernize-use-nodiscard
+  -modernize-use-nodiscard,
+  -portability-simd-intrinsics,
 
 WarningsAsErrors: "*"
 
