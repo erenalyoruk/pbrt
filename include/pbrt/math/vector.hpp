@@ -4,6 +4,7 @@
 #include "pbrt/inline.hpp"
 #include "pbrt/math/constants.hpp"
 #include "pbrt/math/traits.hpp"
+#include "pbrt/math/utility.hpp"
 #include "pbrt/types.hpp"
 
 #include <algorithm>
@@ -307,12 +308,7 @@ public:
   {
     for (SizeType i = 0; i < N; ++i)
     {
-      if (other.m_data[i] == T{0}) [[unlikely]]
-      {
-        continue;
-      }
-
-      m_data[i] /= other.m_data[i];
+      m_data[i] = safe_divide(m_data[i], other.m_data[i]);
     }
 
     return *this;
@@ -326,14 +322,9 @@ public:
    */
   PBRT_INLINE constexpr Vector &operator/=(T const &scalar) noexcept
   {
-    if (scalar == T{0}) [[unlikely]]
-    {
-      return *this;
-    }
-
     for (SizeType i = 0; i < N; ++i)
     {
-      m_data[i] /= scalar;
+      m_data[i] = safe_divide(m_data[i], scalar);
     }
 
     return *this;
