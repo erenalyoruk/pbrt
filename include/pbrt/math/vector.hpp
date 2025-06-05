@@ -1,10 +1,12 @@
 #pragma once
 
+#include "pbrt/alignment_of.hpp"
 #include "pbrt/assertions.hpp"
 #include "pbrt/inline.hpp"
 #include "pbrt/math/constants.hpp"
 #include "pbrt/math/traits.hpp"
 #include "pbrt/math/utility.hpp"
+#include "pbrt/simd.hpp" // IWYU pragma: keep
 #include "pbrt/types.hpp"
 
 #include <algorithm>
@@ -1068,7 +1070,7 @@ public:
   }
 
 private:
-  std::array<T, N> m_data{};
+  alignas(ALIGN_OF(T)) std::array<T, N> m_data{};
 };
 
 /**
@@ -1392,16 +1394,451 @@ template <>
 }
 
 template <>
-[[nodiscard]] PBRT_INLINE constexpr f64 Vector<f64, 2>::dot(Vector const &other) const noexcept
+PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator+=(Vector const &other) noexcept
 {
-  return (m_data[0] * other.m_data[0]) + (m_data[1] * other.m_data[1]);
+#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+  __m128 a{_mm_loadu_ps(m_data.data())};
+  __m128 b{_mm_loadu_ps(other.m_data.data())};
+  __m128 sum{_mm_add_ps(a, b)};
+
+  _mm_storeu_ps(m_data.data(), sum);
+
+  return *this;
+#else
+  for (usize i = 0; i < N; ++i)
+  {
+    m_data[i] += other.m_data[i];
+  }
+
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator-=(Vector const &other) noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+  __m128 a{_mm_loadu_ps(m_data.data())};
+  __m128 b{_mm_loadu_ps(other.m_data.data())};
+  __m128 diff{_mm_sub_ps(a, b)};
+
+  _mm_storeu_ps(m_data.data(), diff);
+
+  return *this;
+#else
+  for (usize i = 0; i < N; ++i)
+  {
+    m_data[i] -= other.m_data[i];
+  }
+
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator*=(Vector const &other) noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+  __m128 a{_mm_loadu_ps(m_data.data())};
+  __m128 b{_mm_loadu_ps(other.m_data.data())};
+  __m128 mul{_mm_mul_ps(a, b)};
+
+  _mm_storeu_ps(m_data.data(), mul);
+
+  return *this;
+#else
+  for (usize i = 0; i < N; ++i)
+  {
+    m_data[i] *= other.m_data[i];
+  }
+
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator*=(f32 const &scalar) noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+  __m128 a{_mm_loadu_ps(m_data.data())};
+  __m128 b{_mm_set1_ps(scalar)};
+  __m128 mul{_mm_mul_ps(a, b)};
+
+  _mm_storeu_ps(m_data.data(), mul);
+
+  return *this;
+#else
+  for (usize i = 0; i < N; ++i)
+  {
+    m_data[i] *= scalar;
+  }
+
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator/=(Vector const &other) noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+  __m128 a{_mm_loadu_ps(m_data.data())};
+  __m128 b{_mm_loadu_ps(other.m_data.data())};
+  __m128 div{_mm_div_ps(a, b)};
+
+  _mm_storeu_ps(m_data.data(), div);
+
+  return *this;
+#else
+  for (usize i = 0; i < N; ++i)
+  {
+    m_data[i] /= other.m_data[i];
+  }
+
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator/=(f32 const &scalar) noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+  __m128 a{_mm_loadu_ps(m_data.data())};
+  __m128 b{_mm_set1_ps(scalar)};
+  __m128 div{_mm_div_ps(a, b)};
+
+  _mm_storeu_ps(m_data.data(), div);
+
+  return *this;
+#else
+  for (usize i = 0; i < N; ++i)
+  {
+    m_data[i] /= scalar;
+  }
+
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr bool Vector<f32, 4>::operator==(Vector const &other) const noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+  __m128 a{_mm_loadu_ps(m_data.data())};
+  __m128 b{_mm_loadu_ps(other.m_data.data())};
+
+  __m128 cmp{_mm_cmpeq_ps(a, b)};
+  int mask{_mm_movemask_ps(cmp)};
+
+  return (mask & 0xF) == 0xF;
+#else
+  for (usize i = 0; i < 4; ++i)
+  {
+    if (m_data[i] != other[i])
+      return false;
+  }
+  return true;
+#endif
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr f32 Vector<f32, 4>::length() const noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+  __m128 a{_mm_loadu_ps(m_data.data())};
+  __m128 mul{_mm_mul_ps(a, a)};
+  __m128 sum{_mm_hadd_ps(mul, mul)};
+
+  sum = _mm_hadd_ps(sum, sum);
+
+  return std::sqrt(_mm_cvtss_f32(sum));
+#else
+  return std::sqrt(length_squared());
+#endif
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr f32 Vector<f32, 4>::min_component() const noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+  __m128 a{_mm_loadu_ps(m_data.data())};
+
+  __m128 min1{_mm_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1))};
+  __m128 min2{_mm_min_ps(a, min1)};
+  __m128 min3{_mm_shuffle_ps(min2, min2, _MM_SHUFFLE(1, 0, 3, 2))};
+
+  __m128 result{_mm_min_ps(min2, min3)};
+
+  return _mm_cvtss_f32(result);
+#else
+  return *std::min_element(cbegin(), cend());
+#endif
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr f32 Vector<f32, 4>::max_component() const noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+  __m128 a{_mm_loadu_ps(m_data.data())};
+
+  __m128 max1{_mm_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1))};
+  __m128 max2{_mm_max_ps(a, max1)};
+  __m128 max3{_mm_shuffle_ps(max2, max2, _MM_SHUFFLE(1, 0, 3, 2))};
+
+  __m128 result{_mm_max_ps(max2, max3)};
+
+  return _mm_cvtss_f32(result);
+#else
+  return *std::max_element(cbegin(), cend());
+#endif
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr Vector<f32, 4> Vector<f32, 4>::abs() const noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+  __m128 a{_mm_loadu_ps(m_data.data())};
+  __m128 mask{_mm_castsi128_ps(_mm_set1_epi32(0x7FFFFFFF))};
+  __m128 result{_mm_and_ps(a, mask)};
+
+  Vector<f32, 4> output{};
+  _mm_storeu_ps(output.data(), result);
+
+  return output;
+#else
+  Vector result{*this};
+  for (SizeType i = 0; i < 4; ++i)
+  {
+    result.m_data[i] = std::abs(m_data[i]);
+  }
+  return result;
+#endif
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr f32 Vector<f32, 4>::length_squared() const noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+  __m128 a{_mm_loadu_ps(m_data.data())};
+  __m128 mul{_mm_mul_ps(a, a)};
+  __m128 sum{_mm_hadd_ps(mul, mul)};
+
+  sum = _mm_hadd_ps(sum, sum);
+
+  return _mm_cvtss_f32(sum);
+#else
+  return dot(*this);
+#endif
 }
 
 template <>
 [[nodiscard]] PBRT_INLINE constexpr f32 Vector<f32, 3>::dot(Vector const &other) const noexcept
 {
+#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+  __m128 a{_mm_set_ps(0.0F, m_data[2], m_data[1], m_data[0])};
+  __m128 b{_mm_set_ps(0.0F, other[2], other[1], other[0])};
+  __m128 mul{_mm_mul_ps(a, b)};
+  __m128 sum{_mm_hadd_ps(mul, mul)};
+
+  sum = _mm_hadd_ps(sum, sum);
+
+  return _mm_cvtss_f32(sum);
+#else
   return (m_data[0] * other.m_data[0]) + (m_data[1] * other.m_data[1]) +
          (m_data[2] * other.m_data[2]);
+#endif
+}
+
+template <>
+[[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<f32, 3> cross(
+    Vector<f32, 3> const &lhs, Vector<f32, 3> const &rhs) noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+  __m128 a{_mm_set_ps(0.0F, lhs[2], lhs[1], lhs[0])};
+  __m128 b{_mm_set_ps(0.0F, rhs[2], rhs[1], rhs[0])};
+
+  __m128 aYzx{_mm_shuffle_ps(a, a, _MM_SHUFFLE(3, 0, 2, 1))};
+  __m128 bYzx{_mm_shuffle_ps(b, b, _MM_SHUFFLE(3, 0, 2, 1))};
+
+  __m128 bZxy{_mm_shuffle_ps(b, b, _MM_SHUFFLE(3, 1, 0, 2))};
+  __m128 aZxy{_mm_shuffle_ps(a, a, _MM_SHUFFLE(3, 1, 0, 2))};
+
+  __m128 mul1{_mm_mul_ps(aYzx, bZxy)};
+  __m128 mul2{_mm_mul_ps(aZxy, bYzx)};
+
+  __m128 result{_mm_sub_ps(mul1, mul2)};
+
+  alignas(16) std::array<f32, 4> data{};
+  _mm_store_ps(data.data(), result);
+
+  return {data[0], data[1], data[2]};
+#else
+  return {lhs[1] * rhs[2] - lhs[2] * rhs[1], lhs[2] * rhs[0] - lhs[0] * rhs[2],
+          lhs[0] * rhs[1] - lhs[1] * rhs[0]};
+#endif
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr f32 Vector<f32, 4>::dot(Vector const &other) const noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+  __m128 a{_mm_loadu_ps(m_data.data())};
+  __m128 b{_mm_loadu_ps(other.m_data.data())};
+  __m128 mul{_mm_mul_ps(a, b)};
+  __m128 sum{_mm_hadd_ps(mul, mul)};
+
+  sum = _mm_hadd_ps(sum, sum);
+
+  return _mm_cvtss_f32(sum);
+#else
+  return (m_data[0] * other.m_data[0]) + (m_data[1] * other.m_data[1]) +
+         (m_data[2] * other.m_data[2]) + (m_data[3] * other.m_data[3]);
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator+=(Vector const &other) noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2)
+  __m256d a{_mm256_load_pd(m_data.data())};
+  __m256d b{_mm256_load_pd(other.m_data.data())};
+  __m256d sum{_mm256_add_pd(a, b)};
+  _mm256_store_pd(m_data.data(), sum);
+  return *this;
+#else
+  for (usize i = 0; i < 4; ++i)
+  {
+    m_data[i] += other[i];
+  }
+
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator-=(Vector const &other) noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2)
+  __m256d a{_mm256_loadu_pd(m_data.data())};
+  __m256d b{_mm256_loadu_pd(other.m_data.data())};
+
+  __m256d result{_mm256_sub_pd(a, b)};
+  _mm256_storeu_pd(m_data.data(), result);
+
+  return *this;
+#else
+  for (usize i = 0; i < 4; ++i)
+  {
+    m_data[i] -= other[i];
+  }
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator*=(Vector const &other) noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2)
+  __m256d a{_mm256_loadu_pd(m_data.data())};
+  __m256d b{_mm256_loadu_pd(other.m_data.data())};
+
+  __m256d result{_mm256_mul_pd(a, b)};
+  _mm256_storeu_pd(m_data.data(), result);
+
+  return *this;
+#else
+  for (usize i = 0; i < 4; ++i)
+  {
+    m_data[i] *= other.m_data[i];
+  }
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator*=(f64 const &scalar) noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2)
+  __m256d a{_mm256_loadu_pd(m_data.data())};
+  __m256d b{_mm256_set1_pd(scalar)};
+  __m256d result{_mm256_mul_pd(a, b)};
+
+  _mm256_storeu_pd(m_data.data(), result);
+
+  return *this;
+#else
+  for (usize i = 0; i < 4; ++i)
+  {
+    m_data[i] *= scalar;
+  }
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator/=(Vector const &other) noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2)
+  __m256d a{_mm256_loadu_pd(m_data.data())};
+  __m256d b{_mm256_loadu_pd(other.m_data.data())};
+
+  __m256d result{_mm256_div_pd(a, b)};
+  _mm256_storeu_pd(m_data.data(), result);
+
+  return *this;
+#else
+  for (usize i = 0; i < 4; ++i)
+  {
+    m_data[i] /= other.m_data[i];
+  }
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator/=(f64 const &scalar) noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2)
+  __m256d a{_mm256_loadu_pd(m_data.data())};
+  __m256d b{_mm256_set1_pd(scalar)};
+  __m256d result{_mm256_div_pd(a, b)};
+
+  _mm256_storeu_pd(m_data.data(), result);
+
+  return *this;
+#else
+  for (usize i = 0; i < 4; ++i)
+  {
+    m_data[i] /= scalar;
+  }
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr bool Vector<f64, 4>::operator==(Vector const &other) const noexcept
+{
+#if defined(PBRT_SIMD_LEVEL_AVX2)
+  __m256d a{_mm256_loadu_pd(m_data.data())};
+  __m256d b{_mm256_loadu_pd(other.m_data.data())};
+
+  __m256d cmp{_mm256_cmp_pd(a, b, _CMP_EQ_OQ)};
+  int mask{_mm256_movemask_pd(cmp)};
+
+  return (mask & 0xF) == 0xF;
+#else
+  for (usize i = 0; i < 4; ++i)
+  {
+    if (m_data[i] != other.m_data[i])
+      return false;
+  }
+  return true;
+#endif
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr f64 Vector<f64, 2>::dot(Vector const &other) const noexcept
+{
+  return (m_data[0] * other.m_data[0]) + (m_data[1] * other.m_data[1]);
 }
 
 template <>
@@ -1412,16 +1849,23 @@ template <>
 }
 
 template <>
-[[nodiscard]] PBRT_INLINE constexpr f32 Vector<f32, 4>::dot(Vector const &other) const noexcept
-{
-  return (m_data[0] * other.m_data[0]) + (m_data[1] * other.m_data[1]) +
-         (m_data[2] * other.m_data[2]) + (m_data[3] * other.m_data[3]);
-}
-
-template <>
 [[nodiscard]] PBRT_INLINE constexpr f64 Vector<f64, 4>::dot(Vector const &other) const noexcept
 {
+#if defined(PBRT_SIMD_LEVEL_AVX2)
+  __m256d a{_mm256_load_pd(m_data.data())};
+  __m256d b{_mm256_load_pd(other.m_data.data())};
+
+  __m256d mul{_mm256_mul_pd(a, b)};
+  __m256d sum{_mm256_hadd_pd(mul, mul)};
+
+  __m128d sumHigh{_mm256_extractf128_pd(sum, 1)};
+  __m128d sumLow{_mm256_castpd256_pd128(sum)};
+  __m128d finalSum{_mm_add_pd(sumHigh, sumLow)};
+
+  return _mm_cvtsd_f64(finalSum);
+#else
   return (m_data[0] * other.m_data[0]) + (m_data[1] * other.m_data[1]) +
          (m_data[2] * other.m_data[2]) + (m_data[3] * other.m_data[3]);
+#endif
 }
 } // namespace pbrt::math

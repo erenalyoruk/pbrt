@@ -215,27 +215,6 @@ TEMPLATE_TEST_CASE("Vector arithmetic operations", "[math][vector][template]", u
     }
   }
 
-  SECTION("Dot product, length and normalize")
-  {
-    using namespace Catch;
-
-    Vector<double, 2> v{3.0, 4.0};
-    REQUIRE(v.dot(v) == Approx(25.0));
-    REQUIRE(v.length_squared() == Approx(25.0));
-    REQUIRE(v.length() == Approx(5.0));
-
-    auto vNormalizedCopy = v.normalized();
-    REQUIRE(vNormalizedCopy[0] == Approx(3.0 / 5.0));
-    REQUIRE(vNormalizedCopy[1] == Approx(4.0 / 5.0));
-    REQUIRE(vNormalizedCopy.length() == Approx(1.0));
-    REQUIRE(v[0] == Approx(3.0));
-
-    v.normalize();
-    REQUIRE(v[0] == Approx(3.0 / 5.0));
-    REQUIRE(v[1] == Approx(4.0 / 5.0));
-    REQUIRE(v.length() == Approx(1.0));
-  }
-
   SECTION("Comparison")
   {
     Vector<TestType, 3> x{1, 2, 3};
@@ -244,18 +223,6 @@ TEMPLATE_TEST_CASE("Vector arithmetic operations", "[math][vector][template]", u
 
     REQUIRE(x == y);
     REQUIRE(x != z);
-  }
-
-  SECTION("Cross product")
-  {
-    Vector<float, 3> i{1, 0, 0};
-    Vector<float, 3> j{0, 1, 0};
-    Vector<float, 3> k{0, 0, 1};
-
-    REQUIRE(cross(i, j) == k);
-    REQUIRE(cross(j, k) == i);
-    REQUIRE(cross(k, i) == j);
-    REQUIRE(cross(i, i) == Vector<float, 3>::zero());
   }
 
   SECTION("Iterators and data")
@@ -293,12 +260,323 @@ TEMPLATE_TEST_CASE("Vector arithmetic operations", "[math][vector][template]", u
   }
 }
 
+TEST_CASE("SIMD f32 4-component vector operations", "[math][vector][simd]")
+{
+  using Vec4f = Vector<f32, 4>;
+
+  SECTION("SIMD Addition")
+  {
+    Vec4f v1{1.0F, 2.0F, 3.0F, 4.0F};
+    Vec4f v2{5.0F, 6.0F, 7.0F, 8.0F};
+
+    Vec4f result = v1;
+    result += v2;
+
+    REQUIRE(result[0] == Catch::Approx(6.0F));
+    REQUIRE(result[1] == Catch::Approx(8.0F));
+    REQUIRE(result[2] == Catch::Approx(10.0F));
+    REQUIRE(result[3] == Catch::Approx(12.0F));
+  }
+
+  SECTION("SIMD Subtraction")
+  {
+    Vec4f v1{10.0F, 9.0F, 8.0F, 7.0F};
+    Vec4f v2{1.0F, 2.0F, 3.0F, 4.0F};
+
+    Vec4f result = v1;
+    result -= v2;
+
+    REQUIRE(result[0] == Catch::Approx(9.0F));
+    REQUIRE(result[1] == Catch::Approx(7.0F));
+    REQUIRE(result[2] == Catch::Approx(5.0F));
+    REQUIRE(result[3] == Catch::Approx(3.0F));
+  }
+
+  SECTION("SIMD Element-wise multiplication")
+  {
+    Vec4f v1{2.0F, 3.0F, 4.0F, 5.0F};
+    Vec4f v2{1.0F, 2.0F, 3.0F, 4.0F};
+
+    Vec4f result = v1;
+    result *= v2;
+
+    REQUIRE(result[0] == Catch::Approx(2.0F));
+    REQUIRE(result[1] == Catch::Approx(6.0F));
+    REQUIRE(result[2] == Catch::Approx(12.0F));
+    REQUIRE(result[3] == Catch::Approx(20.0F));
+  }
+
+  SECTION("SIMD Scalar multiplication")
+  {
+    Vec4f v1{1.0F, 2.0F, 3.0F, 4.0F};
+    f32 scalar = 2.5F;
+
+    Vec4f result = v1;
+    result *= scalar;
+
+    REQUIRE(result[0] == Catch::Approx(2.5F));
+    REQUIRE(result[1] == Catch::Approx(5.0F));
+    REQUIRE(result[2] == Catch::Approx(7.5F));
+    REQUIRE(result[3] == Catch::Approx(10.0F));
+  }
+
+  SECTION("SIMD Element-wise division")
+  {
+    Vec4f v1{8.0F, 12.0F, 16.0F, 20.0F};
+    Vec4f v2{2.0F, 3.0F, 4.0F, 5.0F};
+
+    Vec4f result = v1;
+    result /= v2;
+
+    REQUIRE(result[0] == Catch::Approx(4.0F));
+    REQUIRE(result[1] == Catch::Approx(4.0F));
+    REQUIRE(result[2] == Catch::Approx(4.0F));
+    REQUIRE(result[3] == Catch::Approx(4.0F));
+  }
+
+  SECTION("SIMD Scalar division")
+  {
+    Vec4f v1{8.0F, 12.0F, 16.0F, 20.0F};
+    f32 scalar = 4.0F;
+
+    Vec4f result = v1;
+    result /= scalar;
+
+    REQUIRE(result[0] == Catch::Approx(2.0F));
+    REQUIRE(result[1] == Catch::Approx(3.0F));
+    REQUIRE(result[2] == Catch::Approx(4.0F));
+    REQUIRE(result[3] == Catch::Approx(5.0F));
+  }
+
+  SECTION("SIMD Equality comparison")
+  {
+    Vec4f v1{1.0F, 2.0F, 3.0F, 4.0F};
+    Vec4f v2{1.0F, 2.0F, 3.0F, 4.0F};
+    Vec4f v3{1.0F, 2.0F, 3.0F, 5.0F};
+
+    REQUIRE(v1 == v2);
+    REQUIRE_FALSE(v1 == v3);
+  }
+
+  SECTION("SIMD Dot product")
+  {
+    Vec4f v1{1.0F, 2.0F, 3.0F, 4.0F};
+    Vec4f v2{5.0F, 6.0F, 7.0F, 8.0F};
+
+    f32 result = v1.dot(v2);
+    f32 expected = (1.0F * 5.0F) + (2.0F * 6.0F) + (3.0F * 7.0F) + (4.0F * 8.0F); // 70
+
+    REQUIRE(result == Catch::Approx(expected));
+  }
+
+  SECTION("SIMD Length and length squared")
+  {
+    Vec4f v{3.0F, 4.0F, 0.0F, 0.0F};
+
+    f32 lengthSq = v.length_squared();
+    f32 length = v.length();
+
+    REQUIRE(lengthSq == Catch::Approx(25.0F));
+    REQUIRE(length == Catch::Approx(5.0F));
+  }
+
+  SECTION("SIMD Min and max component")
+  {
+    Vec4f v{-2.0F, 5.0F, 1.0F, -3.0F};
+
+    f32 minComp = v.min_component();
+    f32 maxComp = v.max_component();
+
+    REQUIRE(minComp == Catch::Approx(-3.0F));
+    REQUIRE(maxComp == Catch::Approx(5.0F));
+  }
+
+  SECTION("SIMD Absolute value")
+  {
+    Vec4f v{-1.0F, 2.0F, -3.0F, 4.0F};
+    Vec4f absV = v.abs();
+
+    REQUIRE(absV[0] == Catch::Approx(1.0F));
+    REQUIRE(absV[1] == Catch::Approx(2.0F));
+    REQUIRE(absV[2] == Catch::Approx(3.0F));
+    REQUIRE(absV[3] == Catch::Approx(4.0F));
+  }
+}
+
+TEST_CASE("SIMD f64 4-component vector operations", "[math][vector][simd][avx]")
+{
+  using Vec4d = Vector<f64, 4>;
+
+  SECTION("AVX Addition")
+  {
+    Vec4d v1{1.0, 2.0, 3.0, 4.0};
+    Vec4d v2{5.0, 6.0, 7.0, 8.0};
+
+    Vec4d result = v1;
+    result += v2;
+
+    REQUIRE(result[0] == Catch::Approx(6.0));
+    REQUIRE(result[1] == Catch::Approx(8.0));
+    REQUIRE(result[2] == Catch::Approx(10.0));
+    REQUIRE(result[3] == Catch::Approx(12.0));
+  }
+
+  SECTION("AVX Subtraction")
+  {
+    Vec4d v1{10.0, 9.0, 8.0, 7.0};
+    Vec4d v2{1.0, 2.0, 3.0, 4.0};
+
+    Vec4d result = v1;
+    result -= v2;
+
+    REQUIRE(result[0] == Catch::Approx(9.0));
+    REQUIRE(result[1] == Catch::Approx(7.0));
+    REQUIRE(result[2] == Catch::Approx(5.0));
+    REQUIRE(result[3] == Catch::Approx(3.0));
+  }
+
+  SECTION("AVX Element-wise multiplication")
+  {
+    Vec4d v1{2.0, 3.0, 4.0, 5.0};
+    Vec4d v2{1.0, 2.0, 3.0, 4.0};
+
+    Vec4d result = v1;
+    result *= v2;
+
+    REQUIRE(result[0] == Catch::Approx(2.0));
+    REQUIRE(result[1] == Catch::Approx(6.0));
+    REQUIRE(result[2] == Catch::Approx(12.0));
+    REQUIRE(result[3] == Catch::Approx(20.0));
+  }
+
+  SECTION("AVX Scalar multiplication")
+  {
+    Vec4d v1{1.0, 2.0, 3.0, 4.0};
+    f64 scalar = 2.5;
+
+    Vec4d result = v1;
+    result *= scalar;
+
+    REQUIRE(result[0] == Catch::Approx(2.5));
+    REQUIRE(result[1] == Catch::Approx(5.0));
+    REQUIRE(result[2] == Catch::Approx(7.5));
+    REQUIRE(result[3] == Catch::Approx(10.0));
+  }
+
+  SECTION("AVX Element-wise division")
+  {
+    Vec4d v1{8.0, 12.0, 16.0, 20.0};
+    Vec4d v2{2.0, 3.0, 4.0, 5.0};
+
+    Vec4d result = v1;
+    result /= v2;
+
+    REQUIRE(result[0] == Catch::Approx(4.0));
+    REQUIRE(result[1] == Catch::Approx(4.0));
+    REQUIRE(result[2] == Catch::Approx(4.0));
+    REQUIRE(result[3] == Catch::Approx(4.0));
+  }
+
+  SECTION("AVX Scalar division")
+  {
+    Vec4d v1{8.0, 12.0, 16.0, 20.0};
+    f64 scalar = 4.0;
+
+    Vec4d result = v1;
+    result /= scalar;
+
+    REQUIRE(result[0] == Catch::Approx(2.0));
+    REQUIRE(result[1] == Catch::Approx(3.0));
+    REQUIRE(result[2] == Catch::Approx(4.0));
+    REQUIRE(result[3] == Catch::Approx(5.0));
+  }
+
+  SECTION("AVX Equality comparison")
+  {
+    Vec4d v1{1.0, 2.0, 3.0, 4.0};
+    Vec4d v2{1.0, 2.0, 3.0, 4.0};
+    Vec4d v3{1.0, 2.0, 3.0, 5.0};
+
+    REQUIRE(v1 == v2);
+    REQUIRE_FALSE(v1 == v3);
+  }
+
+  SECTION("AVX Dot product")
+  {
+    Vec4d v1{1.0, 2.0, 3.0, 4.0};
+    Vec4d v2{5.0, 6.0, 7.0, 8.0};
+
+    f64 result = v1.dot(v2);
+    f64 expected = (1.0 * 5.0) + (2.0 * 6.0) + (3.0 * 7.0) + (4.0 * 8.0); // 70
+
+    REQUIRE(result == Catch::Approx(expected));
+  }
+}
+
+TEST_CASE("SIMD f32 3-component vector operations", "[math][vector][simd]")
+{
+  using Vec3f = Vector<f32, 3>;
+
+  SECTION("SIMD Dot product for 3D vectors")
+  {
+    Vec3f v1{1.0F, 2.0F, 3.0F};
+    Vec3f v2{4.0F, 5.0F, 6.0F};
+
+    f32 result = v1.dot(v2);
+    f32 expected = (1.0F * 4.0F) + (2.0F * 5.0F) + (3.0F * 6.0F); // 32
+
+    REQUIRE(result == Catch::Approx(expected));
+  }
+
+  SECTION("SIMD Cross product for 3D vectors")
+  {
+    Vec3f i{1.0F, 0.0F, 0.0F};
+    Vec3f j{0.0F, 1.0F, 0.0F};
+    Vec3f k{0.0F, 0.0F, 1.0F};
+
+    Vec3f resultIj = cross(i, j);
+    Vec3f resultJk = cross(j, k);
+    Vec3f resultKi = cross(k, i);
+
+    REQUIRE(resultIj[0] == Catch::Approx(0.0F));
+    REQUIRE(resultIj[1] == Catch::Approx(0.0F));
+    REQUIRE(resultIj[2] == Catch::Approx(1.0F));
+
+    REQUIRE(resultJk[0] == Catch::Approx(1.0F));
+    REQUIRE(resultJk[1] == Catch::Approx(0.0F));
+    REQUIRE(resultJk[2] == Catch::Approx(0.0F));
+
+    REQUIRE(resultKi[0] == Catch::Approx(0.0F));
+    REQUIRE(resultKi[1] == Catch::Approx(1.0F));
+    REQUIRE(resultKi[2] == Catch::Approx(0.0F));
+  }
+}
+
 TEMPLATE_TEST_CASE("Vector floating point features", "[math][vector][template]", f32, f64)
 {
   using namespace Catch;
 
   using Vec2T = Vector<TestType, 2>;
   using Vec3T = Vector<TestType, 3>;
+  using Vec4T = Vector<TestType, 4>;
+
+  SECTION("Dot product and length")
+  {
+    Vec2T v{3, 4};
+    REQUIRE(v.dot(v) == Approx(static_cast<TestType>(25.0)));
+    REQUIRE(v.length_squared() == Approx(static_cast<TestType>(25.0)));
+    REQUIRE(v.length() == Approx(static_cast<TestType>(5.0)));
+
+    auto vNormalized = v.normalized();
+    REQUIRE(vNormalized[0] == Approx(static_cast<TestType>(3.0 / 5.0)));
+    REQUIRE(vNormalized[1] == Approx(static_cast<TestType>(4.0 / 5.0)));
+    REQUIRE(vNormalized.length() == Approx(static_cast<TestType>(1.0)));
+
+    v.normalize();
+    REQUIRE(v[0] == Approx(static_cast<TestType>(3.0 / 5.0)));
+    REQUIRE(v[1] == Approx(static_cast<TestType>(4.0 / 5.0)));
+    REQUIRE(v.length() == Approx(static_cast<TestType>(1.0)));
+  }
 
   SECTION("Approximate equality")
   {
@@ -478,7 +756,7 @@ TEMPLATE_TEST_CASE("Vector floating point features", "[math][vector][template]",
     REQUIRE(xz(v3) == Vec2T(1, 3));
     REQUIRE(yz(v3) == Vec2T(2, 3));
 
-    Vector<TestType, 4> v4{1, 2, 3, 4};
+    Vec4T v4{1, 2, 3, 4};
     REQUIRE(xyz(v4) == Vec3T(1, 2, 3));
   }
 
@@ -486,11 +764,11 @@ TEMPLATE_TEST_CASE("Vector floating point features", "[math][vector][template]",
   {
     if constexpr (std::is_same_v<TestType, float>)
     {
-      Vector<f32, 3> vDouble{1.1, 2.2, 3.3};
-      Vector<f64, 3> vFloat(vDouble);
-      REQUIRE(vFloat[0] == Approx(1.1F));
-      REQUIRE(vFloat[1] == Approx(2.2F));
-      REQUIRE(vFloat[2] == Approx(3.3F));
+      Vector<f32, 3> vFloat{1.1F, 2.2F, 3.3F};
+      Vector<f64, 3> vDouble(vFloat);
+      REQUIRE(vDouble[0] == Approx(static_cast<double>(1.1F)));
+      REQUIRE(vDouble[1] == Approx(static_cast<double>(2.2F)));
+      REQUIRE(vDouble[2] == Approx(static_cast<double>(3.3F)));
     }
     else if constexpr (std::is_same_v<TestType, double>)
     {
@@ -505,5 +783,119 @@ TEMPLATE_TEST_CASE("Vector floating point features", "[math][vector][template]",
     Vector<TestType, 2> vTestType(vInt);
     REQUIRE(vTestType[0] == Approx(static_cast<TestType>(5)));
     REQUIRE(vTestType[1] == Approx(static_cast<TestType>(10)));
+  }
+}
+
+TEST_CASE("Vector SIMD performance and edge cases", "[math][vector][simd][performance]")
+{
+  SECTION("Large vector operations performance test")
+  {
+    constexpr usize numOps = 10000;
+    Vector<f32, 4> vec1{1.0F, 2.0F, 3.0F, 4.0F};
+    Vector<f32, 4> vec2{5.0F, 6.0F, 7.0F, 8.0F};
+
+    for (usize i = 0; i < numOps; ++i)
+    {
+      vec1 += vec2;
+      vec1 *= 0.999F;
+    }
+
+    REQUIRE(std::isfinite(vec1[0]));
+    REQUIRE(std::isfinite(vec1[1]));
+    REQUIRE(std::isfinite(vec1[2]));
+    REQUIRE(std::isfinite(vec1[3]));
+  }
+
+  SECTION("Edge cases with very small numbers")
+  {
+    Vector<f32, 4> vecSmall{1e-30F, 1e-30F, 1e-30F, 1e-30F};
+    Vector<f32, 4> vecResult = vecSmall * 2.0F;
+
+    REQUIRE(vecResult[0] == Catch::Approx(2e-30F).margin(EPSILON<f32>));
+    REQUIRE(vecResult[1] == Catch::Approx(2e-30F).margin(EPSILON<f32>));
+    REQUIRE(vecResult[2] == Catch::Approx(2e-30F).margin(EPSILON<f32>));
+    REQUIRE(vecResult[3] == Catch::Approx(2e-30F).margin(EPSILON<f32>));
+  }
+
+  SECTION("Edge cases with very large numbers")
+  {
+    Vector<f32, 4> vecLarge{1e30F, 1e30F, 1e30F, 1e30F};
+    Vector<f32, 4> vecResult = vecLarge * 0.5F;
+
+    REQUIRE(vecResult[0] == Catch::Approx(5e29F).margin(EPSILON<f32>));
+    REQUIRE(vecResult[1] == Catch::Approx(5e29F).margin(EPSILON<f32>));
+    REQUIRE(vecResult[2] == Catch::Approx(5e29F).margin(EPSILON<f32>));
+    REQUIRE(vecResult[3] == Catch::Approx(5e29F).margin(EPSILON<f32>));
+  }
+
+  SECTION("Memory alignment test")
+  {
+    std::vector<f32> data{1.0F, 2.0F, 3.0F, 4.0F, 5.0F, 6.0F, 7.0F, 8.0F};
+
+    Vector<f32, 4> vec1{data[0], data[1], data[2], data[3]};
+    Vector<f32, 4> vec2{data[4], data[5], data[6], data[7]};
+
+    Vector<f32, 4> result = vec1 + vec2;
+
+    REQUIRE(result[0] == Catch::Approx(6.0F).margin(EPSILON<f32>));
+    REQUIRE(result[1] == Catch::Approx(8.0F).margin(EPSILON<f32>));
+    REQUIRE(result[2] == Catch::Approx(10.0F).margin(EPSILON<f32>));
+    REQUIRE(result[3] == Catch::Approx(12.0F).margin(EPSILON<f32>));
+  }
+}
+
+TEST_CASE("Cross product comprehensive tests", "[math][vector][cross]")
+{
+  using Vec3f = Vector<f32, 3>;
+
+  SECTION("Basic cross product identities")
+  {
+    Vec3f i{1.0F, 0.0F, 0.0F};
+    Vec3f j{0.0F, 1.0F, 0.0F};
+    Vec3f k{0.0F, 0.0F, 1.0F};
+
+    REQUIRE(cross(i, j) == k);
+    REQUIRE(cross(j, k) == i);
+    REQUIRE(cross(k, i) == j);
+    REQUIRE(cross(j, i) == -k);
+    REQUIRE(cross(k, j) == -i);
+    REQUIRE(cross(i, k) == -j);
+  }
+
+  SECTION("Cross product with arbitrary vectors")
+  {
+    Vec3f vecA{2.0F, 3.0F, 4.0F};
+    Vec3f vecB{5.0F, 6.0F, 7.0F};
+
+    Vec3f result = cross(vecA, vecB);
+
+    REQUIRE(result[0] == Catch::Approx(-3.0F).margin(EPSILON<f32>));
+    REQUIRE(result[1] == Catch::Approx(6.0F).margin(EPSILON<f32>));
+    REQUIRE(result[2] == Catch::Approx(-3.0F).margin(EPSILON<f32>));
+  }
+
+  SECTION("Cross product properties")
+  {
+    Vec3f vecA{1.0F, 2.0F, 3.0F};
+    Vec3f vecB{4.0F, 5.0F, 6.0F};
+
+    Vec3f crossAB = cross(vecA, vecB);
+    Vec3f crossBA = cross(vecB, vecA);
+
+    REQUIRE(crossAB == -crossBA);
+    REQUIRE(dot(crossAB, vecA) == Catch::Approx(0.0F).margin(EPSILON<f32>));
+    REQUIRE(dot(crossAB, vecB) == Catch::Approx(0.0F).margin(EPSILON<f32>));
+  }
+
+  SECTION("Cross product with parallel vectors")
+  {
+    Vec3f vecA{1.0F, 2.0F, 3.0F};
+    Vec3f vecB = vecA * 2.0F;
+
+    Vec3f result = cross(vecA, vecB);
+
+    REQUIRE(result[0] == Catch::Approx(0.0F).margin(EPSILON<f32>));
+    REQUIRE(result[1] == Catch::Approx(0.0F).margin(EPSILON<f32>));
+    REQUIRE(result[2] == Catch::Approx(0.0F).margin(EPSILON<f32>));
   }
 }

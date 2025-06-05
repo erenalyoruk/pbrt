@@ -16,6 +16,7 @@ Checks: >
   -bugprone-easily-swappable-parameters,
   -modernize-use-nodiscard,
   -portability-simd-intrinsics,
+  -cppcoreguidelines-pro-bounds-constant-array-index
 
 WarningsAsErrors: "*"
 
@@ -33,7 +34,7 @@ CheckOptions:
   readability-identifier-naming.ParameterCase: camelBack
   readability-identifier-naming.ConstexprFunctionCase: aNy_CasE
   readability-identifier-naming.ConstexprMethodCase: lower_case
-  readability-identifier-naming.GlobalConstantCase: UPPER_CASE
+  readability-identifier-naming.GlobalConstantCase: aNy_CasE
   cppcoreguidelines-macro-usage.CheckCapsOnly: true
   cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true
   misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: true

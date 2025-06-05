@@ -27,8 +27,8 @@ set_target_properties(
 target_sources(
   pbrt_tests
   PRIVATE
-    "assertions.cpp"
-    "types.cpp"
+    "assertions_tests.cpp"
+    "types_tests.cpp"
 )
 
 add_subdirectory("logging")

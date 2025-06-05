@@ -26,7 +26,7 @@ TEST_CASE("Logger should properly build log record", "[logging]")
   REQUIRE(msg == "Test 123");
 
   std::string filename{location.file_name()};
-  REQUIRE(filename.find("logging.cpp") != std::string::npos);
+  REQUIRE(filename.find(std::source_location::current().file_name()) != std::string::npos);
 
   Logger::get_instance().set_callback(nullptr);
 }

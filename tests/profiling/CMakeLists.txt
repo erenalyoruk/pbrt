@@ -1,5 +1,5 @@
 target_sources(
   pbrt_tests
   PRIVATE
-    "profiler.cpp"
+    "profiler_tests.cpp"
 )

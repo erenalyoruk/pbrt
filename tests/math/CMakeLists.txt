@@ -1,8 +1,8 @@
 target_sources(
   pbrt_tests
   PRIVATE
-    "vector.cpp"
-    "matrix.cpp"
-    "matrix_transform.cpp"
-    "quaternion.cpp"
+    "vector_tests.cpp"
+    "matrix_tests.cpp"
+    "matrix_transform_tests.cpp"
+    "quaternion_tests.cpp"
 )
