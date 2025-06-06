@@ -1,11 +1,13 @@
 #pragma once
 
+#include "pbrt/alignment_of.hpp"
 #include "pbrt/assertions.hpp"
 #include "pbrt/export.hpp"
 #include "pbrt/inline.hpp"
 #include "pbrt/math/constants.hpp"
 #include "pbrt/math/traits.hpp"
 #include "pbrt/math/vector.hpp"
+#include "pbrt/simd.hpp" // IWYU pragma: keep
 #include "pbrt/types.hpp"
 
 #include <array>
@@ -883,7 +885,7 @@ public:
   }
 
 private:
-  std::array<T, Rows * Cols> m_data{};
+  alignas(ALIGN_OF(T)) std::array<T, Rows * Cols> m_data{};
 
   [[nodiscard]] PBRT_INLINE constexpr SizeType index(SizeType row, SizeType col) const noexcept
   {
@@ -1254,4 +1256,630 @@ using Mat4u = Matrix<u32, 4, 4>;
 using Mat2 = Mat2f;
 using Mat3 = Mat3f;
 using Mat4 = Mat4f;
+
+template <>
+PBRT_INLINE constexpr Matrix<f32, 4, 4> &Matrix<f32, 4, 4>::operator+=(Matrix const &other) noexcept
+{
+#if defined(PBRT_HAS_SSE42)
+  for (SizeType i = 0; i < 16; i += 4)
+  {
+    __m128 a{_mm_loadu_ps(&m_data[i])};
+    __m128 b{_mm_loadu_ps(&other.m_data[i])};
+    __m128 result{_mm_add_ps(a, b)};
+
+    _mm_storeu_ps(&m_data[i], result);
+  }
+
+  return *this;
+#else
+  for (SizeType i = 0; i < size(); ++i)
+  {
+    m_data[i] += other.m_data[i];
+  }
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Matrix<f32, 4, 4> &Matrix<f32, 4, 4>::operator-=(Matrix const &other) noexcept
+{
+#if defined(PBRT_HAS_SSE42)
+  for (SizeType i = 0; i < 16; i += 4)
+  {
+    __m128 a{_mm_loadu_ps(&m_data[i])};
+    __m128 b{_mm_loadu_ps(&other.m_data[i])};
+    __m128 result{_mm_sub_ps(a, b)};
+
+    _mm_storeu_ps(&m_data[i], result);
+  }
+
+  return *this;
+#else
+  for (SizeType i = 0; i < size(); ++i)
+  {
+    m_data[i] -= other.m_data[i];
+  }
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Matrix<f32, 4, 4> &Matrix<f32, 4, 4>::operator*=(f32 const &scalar) noexcept
+{
+#if defined(PBRT_HAS_SSE42)
+  __m128 scalarVec{_mm_set1_ps(scalar)};
+
+  for (SizeType i = 0; i < 16; i += 4)
+  {
+    __m128 vec{_mm_loadu_ps(&m_data[i])};
+    __m128 result{_mm_mul_ps(vec, scalarVec)};
+
+    _mm_storeu_ps(&m_data[i], result);
+  }
+
+  return *this;
+#else
+  for (SizeType i = 0; i < size(); ++i)
+  {
+    m_data[i] *= scalar;
+  }
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Matrix<f32, 4, 4> &Matrix<f32, 4, 4>::operator/=(f32 const &scalar) noexcept
+{
+#if defined(PBRT_HAS_SSE42)
+  __m128 scalarVec{_mm_set1_ps(scalar)};
+
+  for (SizeType i = 0; i < 16; i += 4)
+  {
+    __m128 vec{_mm_loadu_ps(&m_data[i])};
+    __m128 result{_mm_div_ps(vec, scalarVec)};
+
+    _mm_storeu_ps(&m_data[i], result);
+  }
+
+  return *this;
+#else
+  for (SizeType i = 0; i < size(); ++i)
+  {
+    m_data[i] /= scalar;
+  }
+  return *this;
+#endif
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr Vector<f32, 4> Matrix<f32, 4, 4>::operator*(
+    Vector<f32, 4> const &vector) const noexcept
+{
+#if defined(PBRT_HAS_SSE42)
+  __m128 vec{_mm_loadu_ps(vector.data())};
+
+  __m128 row0{_mm_loadu_ps(m_data.data())};
+  __m128 row1{_mm_loadu_ps(&m_data[4])};
+  __m128 row2{_mm_loadu_ps(&m_data[8])};
+  __m128 row3{_mm_loadu_ps(&m_data[12])};
+
+  __m128 res0{_mm_dp_ps(row0, vec, 0xF1)};
+  __m128 res1{_mm_dp_ps(row1, vec, 0xF2)};
+  __m128 res2{_mm_dp_ps(row2, vec, 0xF4)};
+  __m128 res3{_mm_dp_ps(row3, vec, 0xF8)};
+
+  __m128 result{_mm_or_ps(_mm_or_ps(res0, res1), _mm_or_ps(res2, res3))};
+
+  Vector<f32, 4> out{};
+  _mm_storeu_ps(out.data(), result);
+
+  return out;
+#else
+  Vector<f32, 4> result{};
+  for (usize i = 0; i < 4; ++i)
+  {
+    f32 sum = 0.0F;
+    for (usize j = 0; j < 4; ++j)
+    {
+      sum += (*this)(i, j) * vector[j];
+    }
+    result[i] = sum;
+  }
+  return result;
+#endif
+}
+
+template <>
+template <usize OtherCols>
+[[nodiscard]] PBRT_INLINE constexpr Matrix<f32, 4, OtherCols> Matrix<f32, 4, 4>::operator*(
+    Matrix<f32, 4, OtherCols> const &other) const noexcept
+{
+#if defined(PBRT_HAS_SSE42)
+  if constexpr (OtherCols == 4)
+  {
+    Matrix<f32, 4, 4> result{};
+
+    __m128 col0{_mm_loadu_ps(&other.m_data[0])};
+    __m128 col1{_mm_loadu_ps(&other.m_data[4])};
+    __m128 col2{_mm_loadu_ps(&other.m_data[8])};
+    __m128 col3{_mm_loadu_ps(&other.m_data[12])};
+
+    _MM_TRANSPOSE4_PS(col0, col1, col2, col3);
+
+    for (usize i = 0; i < 4; ++i)
+    {
+      __m128 row{_mm_loadu_ps(&m_data[i * 4])};
+
+      __m128 res0{_mm_dp_ps(row, col0, 0xF1)};
+      __m128 res1{_mm_dp_ps(row, col1, 0xF2)};
+      __m128 res2{_mm_dp_ps(row, col2, 0xF4)};
+      __m128 res3{_mm_dp_ps(row, col3, 0xF8)};
+
+      __m128 finalResult{_mm_or_ps(_mm_or_ps(res0, res1), _mm_or_ps(res2, res3))};
+      _mm_storeu_ps(&result.m_data[i * 4], finalResult);
+    }
+
+    return result;
+  }
+#endif
+
+  return multiply_naive(other);
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr bool Matrix<f32, 4, 4>::operator==(
+    Matrix const &other) const noexcept
+{
+#if defined(PBRT_HAS_SSE42)
+  for (SizeType i = 0; i < 16; i += 4)
+  {
+    __m128 a{_mm_loadu_ps(&m_data[i])};
+    __m128 b{_mm_loadu_ps(&other.m_data[i])};
+    __m128 cmp{_mm_cmpeq_ps(a, b)};
+    int mask{_mm_movemask_ps(cmp)};
+
+    if ((mask & 0xF) != 0xF)
+    {
+      return false;
+    }
+  }
+
+  return true;
+#endif
+
+  for (SizeType i = 0; i < size(); ++i)
+  {
+    if (m_data[i] != other.m_data[i])
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr bool Matrix<f32, 4, 4>::approx_equal(
+    Matrix const &other, f32 const &epsilon) const noexcept
+{
+#if defined(PBRT_HAS_SSE42)
+  __m128 epsVec{_mm_set1_ps(epsilon)};
+  for (SizeType i = 0; i < 16; i += 4)
+  {
+    __m128 a{_mm_loadu_ps(&m_data[i])};
+    __m128 b{_mm_loadu_ps(&other.data()[i])};
+    __m128 diff{_mm_sub_ps(a, b)};
+    __m128 absDiff{_mm_and_ps(diff, _mm_castsi128_ps(_mm_set1_epi32(0x7FFFFFFF)))};
+    __m128 cmp{_mm_cmple_ps(absDiff, epsVec)};
+    int mask{_mm_movemask_ps(cmp)};
+    if ((mask & 0xF) != 0xF)
+    {
+      return false;
+    }
+  }
+
+  return true;
+#else
+  for (SizeType i = 0; i < size(); ++i)
+  {
+    if (std::abs(m_data[i] - other.m_data[i]) > epsilon)
+    {
+      return false;
+    }
+  }
+
+  return true;
+#endif
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr Matrix<f32, 4, 4> Matrix<f32, 4, 4>::transpose() const noexcept
+{
+#if defined(PBRT_HAS_SSE42)
+  __m128 row0{_mm_loadu_ps(data())};
+  __m128 row1{_mm_loadu_ps(&data()[4])};
+  __m128 row2{_mm_loadu_ps(&data()[8])};
+  __m128 row3{_mm_loadu_ps(&data()[12])};
+
+  __m128 tmp0{_mm_unpacklo_ps(row0, row1)};
+  __m128 tmp1{_mm_unpacklo_ps(row2, row3)};
+  __m128 tmp2{_mm_unpackhi_ps(row0, row1)};
+  __m128 tmp3{_mm_unpackhi_ps(row2, row3)};
+
+  Matrix<f32, 4, 4> result{};
+  _mm_storeu_ps(result.data(), _mm_movelh_ps(tmp0, tmp1));
+  _mm_storeu_ps(&result.data()[4], _mm_movehl_ps(tmp1, tmp0));
+  _mm_storeu_ps(&result.data()[8], _mm_movelh_ps(tmp2, tmp3));
+  _mm_storeu_ps(&result.data()[12], _mm_movehl_ps(tmp3, tmp2));
+
+  return result;
+#else
+  Matrix<f32, 4, 4> result;
+  for (SizeType i = 0; i < 4; ++i)
+  {
+    for (SizeType j = 0; j < 4; ++j)
+    {
+      result(j, i) = (*this)(i, j);
+    }
+  }
+  return result;
+#endif
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr Matrix<f32, 4, 4> Matrix<f32, 4, 4>::abs() const noexcept
+{
+#if defined(PBRT_HAS_SSE42)
+  Matrix<f32, 4, 4> result{};
+
+  for (SizeType i = 0; i < 16; i += 4)
+  {
+    __m128 data{_mm_loadu_ps(&m_data[i])};
+    __m128 absMask{_mm_castsi128_ps(_mm_set1_epi32(0x7FFFFFFF))};
+    __m128 absData{_mm_and_ps(data, absMask)};
+    _mm_storeu_ps(&result.m_data[i], absData);
+  }
+
+  return result;
+#else
+  Matrix<f32, 4, 4> result{};
+
+  for (SizeType i = 0; i < size(); ++i)
+  {
+    result.m_data[i] = std::abs(m_data[i]);
+  }
+
+  return result;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Matrix<f64, 4, 4> &Matrix<f64, 4, 4>::operator+=(Matrix const &other) noexcept
+{
+#if defined(PBRT_HAS_AVX2)
+  for (SizeType i = 0; i < 16; i += 4)
+  {
+    __m256d a{_mm256_loadu_pd(&m_data[i])};
+    __m256d b{_mm256_loadu_pd(&other.m_data[i])};
+    __m256d result{_mm256_add_pd(a, b)};
+    _mm256_storeu_pd(&m_data[i], result);
+  }
+  return *this;
+#else
+  for (SizeType i = 0; i < size(); ++i)
+  {
+    m_data[i] += other.m_data[i];
+  }
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Matrix<f32, 4, 4> &Matrix<f32, 4, 4>::operator+=(f32 const &scalar) noexcept
+{
+#if defined(PBRT_HAS_SSE42)
+  __m128 scalarVec{_mm_set1_ps(scalar)};
+
+  for (SizeType i = 0; i < 16; i += 4)
+  {
+    __m128 vec{_mm_loadu_ps(&m_data[i])};
+    __m128 result{_mm_add_ps(vec, scalarVec)};
+    _mm_storeu_ps(&m_data[i], result);
+  }
+
+  return *this;
+#else
+  for (SizeType i = 0; i < size(); ++i)
+  {
+    m_data[i] += scalar;
+  }
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Matrix<f64, 4, 4> &Matrix<f64, 4, 4>::operator-=(Matrix const &other) noexcept
+{
+#if defined(PBRT_HAS_AVX2)
+  for (SizeType i = 0; i < 16; i += 4)
+  {
+    __m256d a{_mm256_loadu_pd(&m_data[i])};
+    __m256d b{_mm256_loadu_pd(&other.m_data[i])};
+    __m256d result{_mm256_sub_pd(a, b)};
+    _mm256_storeu_pd(&m_data[i], result);
+  }
+  return *this;
+#else
+  for (SizeType i = 0; i < size(); ++i)
+  {
+    m_data[i] -= other.m_data[i];
+  }
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Matrix<f64, 4, 4> &Matrix<f64, 4, 4>::operator*=(f64 const &scalar) noexcept
+{
+#if defined(PBRT_HAS_AVX2)
+  __m256d scalarVec{_mm256_set1_pd(scalar)};
+
+  for (SizeType i = 0; i < 16; i += 4)
+  {
+    __m256d vec{_mm256_loadu_pd(&m_data[i])};
+    __m256d result{_mm256_mul_pd(vec, scalarVec)};
+    _mm256_storeu_pd(&m_data[i], result);
+  }
+  return *this;
+#else
+  for (SizeType i = 0; i < size(); ++i)
+  {
+    m_data[i] *= scalar;
+  }
+  return *this;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Matrix<f64, 4, 4> &Matrix<f64, 4, 4>::operator/=(f64 const &scalar) noexcept
+{
+#if defined(PBRT_HAS_AVX2)
+  __m256d scalarVec{_mm256_set1_pd(scalar)};
+
+  for (SizeType i = 0; i < 16; i += 4)
+  {
+    __m256d vec{_mm256_loadu_pd(&m_data[i])};
+    __m256d result{_mm256_div_pd(vec, scalarVec)};
+    _mm256_storeu_pd(&m_data[i], result);
+  }
+  return *this;
+#else
+  for (SizeType i = 0; i < size(); ++i)
+  {
+    m_data[i] /= scalar;
+  }
+  return *this;
+#endif
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr Vector<f64, 4> Matrix<f64, 4, 4>::operator*(
+    Vector<f64, 4> const &vector) const noexcept
+{
+#if defined(PBRT_HAS_AVX2)
+  __m256d vec{_mm256_loadu_pd(vector.data())};
+
+  Vector<f64, 4> result{};
+
+  for (SizeType i = 0; i < 4; ++i)
+  {
+    __m256d row{_mm256_loadu_pd(&(*this)(i, 0))};
+    __m256d mul{_mm256_mul_pd(row, vec)};
+
+    __m256d hadd1{_mm256_hadd_pd(mul, mul)};
+
+    __m128d high{_mm256_extractf128_pd(hadd1, 1)};
+    __m128d low{_mm256_castpd256_pd128(hadd1)};
+    __m128d sum{_mm_add_pd(high, low)};
+
+    _mm_store_sd(&result[i], sum);
+  }
+
+  return result;
+#else
+  Vector<f64, 4> result{};
+  for (SizeType i = 0; i < 4; ++i)
+  {
+    f64 sum{0};
+    for (SizeType j = 0; j < 4; ++j)
+    {
+      sum += (*this)(i, j) * vector[j];
+    }
+    result[i] = sum;
+  }
+  return result;
+#endif
+}
+
+template <>
+template <usize OtherCols>
+[[nodiscard]] PBRT_INLINE constexpr Matrix<f64, 4, OtherCols> Matrix<f64, 4, 4>::operator*(
+    Matrix<f64, 4, OtherCols> const &other) const noexcept
+{
+#if defined(PBRT_HAS_AVX2)
+  Matrix<f64, 4, OtherCols> result;
+
+  __m256d row0 = _mm256_loadu_pd(&(*this)(0, 0));
+  __m256d row1 = _mm256_loadu_pd(&(*this)(1, 0));
+  __m256d row2 = _mm256_loadu_pd(&(*this)(2, 0));
+  __m256d row3 = _mm256_loadu_pd(&(*this)(3, 0));
+
+  for (usize col = 0; col < OtherCols; ++col)
+  {
+    __m256d otherCol = _mm256_set_pd(other(3, col), other(2, col), other(1, col), other(0, col));
+
+    __m256d prod0 = _mm256_mul_pd(row0, otherCol);
+    __m128d low0 = _mm256_castpd256_pd128(prod0);
+    __m128d high0 = _mm256_extractf128_pd(prod0, 1);
+    __m128d sum0 = _mm_add_pd(low0, high0);
+    __m128d final0 = _mm_hadd_pd(sum0, sum0);
+    result(0, col) = _mm_cvtsd_f64(final0);
+
+    __m256d prod1 = _mm256_mul_pd(row1, otherCol);
+    __m128d low1 = _mm256_castpd256_pd128(prod1);
+    __m128d high1 = _mm256_extractf128_pd(prod1, 1);
+    __m128d sum1 = _mm_add_pd(low1, high1);
+    __m128d final1 = _mm_hadd_pd(sum1, sum1);
+    result(1, col) = _mm_cvtsd_f64(final1);
+
+    __m256d prod2 = _mm256_mul_pd(row2, otherCol);
+    __m128d low2 = _mm256_castpd256_pd128(prod2);
+    __m128d high2 = _mm256_extractf128_pd(prod2, 1);
+    __m128d sum2 = _mm_add_pd(low2, high2);
+    __m128d final2 = _mm_hadd_pd(sum2, sum2);
+    result(2, col) = _mm_cvtsd_f64(final2);
+
+    __m256d prod3 = _mm256_mul_pd(row3, otherCol);
+    __m128d low3 = _mm256_castpd256_pd128(prod3);
+    __m128d high3 = _mm256_extractf128_pd(prod3, 1);
+    __m128d sum3 = _mm_add_pd(low3, high3);
+    __m128d final3 = _mm_hadd_pd(sum3, sum3);
+    result(3, col) = _mm_cvtsd_f64(final3);
+  }
+
+  return result;
+
+#else
+  return multiply_naive(other);
+#endif
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr bool Matrix<f64, 4, 4>::operator==(
+    Matrix const &other) const noexcept
+{
+#if defined(PBRT_HAS_AVX2)
+  for (SizeType i = 0; i < 16; i += 4)
+  {
+    __m256d a{_mm256_loadu_pd(&m_data[i])};
+    __m256d b{_mm256_loadu_pd(&other.m_data[i])};
+    __m256d cmp{_mm256_cmp_pd(a, b, _CMP_EQ_OQ)};
+    int mask{_mm256_movemask_pd(cmp)};
+
+    if (mask != 0xF)
+    {
+      return false;
+    }
+  }
+  return true;
+#else
+  for (SizeType i = 0; i < size(); ++i)
+  {
+    if (m_data[i] != other.m_data[i])
+    {
+      return false;
+    }
+  }
+  return true;
+#endif
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr bool Matrix<f64, 4, 4>::approx_equal(
+    Matrix const &other, f64 const &epsilon) const noexcept
+{
+#if defined(PBRT_HAS_AVX2)
+  __m256d epsVec{_mm256_set1_pd(epsilon)};
+  for (SizeType i = 0; i < 16; i += 4)
+  {
+    __m256d a{_mm256_loadu_pd(&m_data[i])};
+    __m256d b{_mm256_loadu_pd(&other.data()[i])};
+    __m256d diff{_mm256_sub_pd(a, b)};
+    __m256d absDiff{
+        _mm256_and_pd(diff, _mm256_castsi256_pd(_mm256_set1_epi64x(0x7FFFFFFFFFFFFFFF)))};
+    __m256d cmp{_mm256_cmp_pd(absDiff, epsVec, _CMP_LE_OQ)};
+    int mask{_mm256_movemask_pd(cmp)};
+    if (mask != 0xF)
+    {
+      return false;
+    }
+  }
+  return true;
+#else
+  for (SizeType i = 0; i < size(); ++i)
+  {
+    if (std::abs(m_data[i] - other.m_data[i]) > epsilon)
+    {
+      return false;
+    }
+  }
+  return true;
+#endif
+}
+
+template <>
+[[nodiscard]] PBRT_INLINE constexpr Matrix<f64, 4, 4> Matrix<f64, 4, 4>::transpose() const noexcept
+{
+#if defined(PBRT_HAS_AVX2)
+  Matrix<f64, 4, 4> result{};
+
+  __m256d row0{_mm256_loadu_pd(data())};
+  __m256d row1{_mm256_loadu_pd(&data()[4])};
+  __m256d row2{_mm256_loadu_pd(&data()[8])};
+  __m256d row3{_mm256_loadu_pd(&data()[12])};
+
+  __m256d t0{_mm256_unpacklo_pd(row0, row1)};
+  __m256d t1{_mm256_unpackhi_pd(row0, row1)};
+  __m256d t2{_mm256_unpacklo_pd(row2, row3)};
+  __m256d t3{_mm256_unpackhi_pd(row2, row3)};
+
+  __m256d r0{_mm256_permute2f128_pd(t0, t2, 0x20)};
+  __m256d r1{_mm256_permute2f128_pd(t1, t3, 0x20)};
+  __m256d r2{_mm256_permute2f128_pd(t0, t2, 0x31)};
+  __m256d r3{_mm256_permute2f128_pd(t1, t3, 0x31)};
+
+  _mm256_storeu_pd(result.data(), r0);
+  _mm256_storeu_pd(&result.data()[4], r1);
+  _mm256_storeu_pd(&result.data()[8], r2);
+  _mm256_storeu_pd(&result.data()[12], r3);
+
+  return result;
+#else
+  Matrix<f64, 4, 4> result{};
+  for (SizeType i = 0; i < 4; ++i)
+  {
+    for (SizeType j = 0; j < 4; ++j)
+    {
+      result(j, i) = (*this)(i, j);
+    }
+  }
+  return result;
+#endif
+}
+
+template <>
+PBRT_INLINE constexpr Matrix<f64, 4, 4> Matrix<f64, 4, 4>::abs() const noexcept
+{
+#if defined(PBRT_HAS_AVX2)
+  Matrix<f64, 4, 4> result{};
+
+  for (SizeType i = 0; i < 16; i += 4)
+  {
+    __m256d data{_mm256_loadu_pd(&m_data[i])};
+    __m256d absMask{_mm256_castsi256_pd(_mm256_set1_epi64x(0x7FFFFFFFFFFFFFFF))};
+    __m256d absData{_mm256_and_pd(data, absMask)};
+    _mm256_storeu_pd(&result.m_data[i], absData);
+  }
+
+  return result;
+#else
+  Matrix<f64, 4, 4> result{};
+
+  for (SizeType i = 0; i < size(); ++i)
+  {
+    result.m_data[i] = std::abs(m_data[i]);
+  }
+
+  return result;
+#endif
+}
 } // namespace pbrt::math

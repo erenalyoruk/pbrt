@@ -1396,7 +1396,7 @@ template <>
 template <>
 PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator+=(Vector const &other) noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+#if defined(PBRT_HAS_SSE42)
   __m128 a{_mm_loadu_ps(m_data.data())};
   __m128 b{_mm_loadu_ps(other.m_data.data())};
   __m128 sum{_mm_add_ps(a, b)};
@@ -1405,7 +1405,7 @@ PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator+=(Vector const &o
 
   return *this;
 #else
-  for (usize i = 0; i < N; ++i)
+  for (usize i = 0; i < 4; ++i)
   {
     m_data[i] += other.m_data[i];
   }
@@ -1417,7 +1417,7 @@ PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator+=(Vector const &o
 template <>
 PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator-=(Vector const &other) noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+#if defined(PBRT_HAS_SSE42)
   __m128 a{_mm_loadu_ps(m_data.data())};
   __m128 b{_mm_loadu_ps(other.m_data.data())};
   __m128 diff{_mm_sub_ps(a, b)};
@@ -1426,7 +1426,7 @@ PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator-=(Vector const &o
 
   return *this;
 #else
-  for (usize i = 0; i < N; ++i)
+  for (usize i = 0; i < 4; ++i)
   {
     m_data[i] -= other.m_data[i];
   }
@@ -1438,7 +1438,7 @@ PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator-=(Vector const &o
 template <>
 PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator*=(Vector const &other) noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+#if defined(PBRT_HAS_SSE42)
   __m128 a{_mm_loadu_ps(m_data.data())};
   __m128 b{_mm_loadu_ps(other.m_data.data())};
   __m128 mul{_mm_mul_ps(a, b)};
@@ -1447,7 +1447,7 @@ PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator*=(Vector const &o
 
   return *this;
 #else
-  for (usize i = 0; i < N; ++i)
+  for (usize i = 0; i < 4; ++i)
   {
     m_data[i] *= other.m_data[i];
   }
@@ -1459,7 +1459,7 @@ PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator*=(Vector const &o
 template <>
 PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator*=(f32 const &scalar) noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+#if defined(PBRT_HAS_SSE42)
   __m128 a{_mm_loadu_ps(m_data.data())};
   __m128 b{_mm_set1_ps(scalar)};
   __m128 mul{_mm_mul_ps(a, b)};
@@ -1468,7 +1468,7 @@ PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator*=(f32 const &scal
 
   return *this;
 #else
-  for (usize i = 0; i < N; ++i)
+  for (usize i = 0; i < 4; ++i)
   {
     m_data[i] *= scalar;
   }
@@ -1480,7 +1480,7 @@ PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator*=(f32 const &scal
 template <>
 PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator/=(Vector const &other) noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+#if defined(PBRT_HAS_SSE42)
   __m128 a{_mm_loadu_ps(m_data.data())};
   __m128 b{_mm_loadu_ps(other.m_data.data())};
   __m128 div{_mm_div_ps(a, b)};
@@ -1489,7 +1489,7 @@ PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator/=(Vector const &o
 
   return *this;
 #else
-  for (usize i = 0; i < N; ++i)
+  for (usize i = 0; i < 4; ++i)
   {
     m_data[i] /= other.m_data[i];
   }
@@ -1501,7 +1501,7 @@ PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator/=(Vector const &o
 template <>
 PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator/=(f32 const &scalar) noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+#if defined(PBRT_HAS_SSE42)
   __m128 a{_mm_loadu_ps(m_data.data())};
   __m128 b{_mm_set1_ps(scalar)};
   __m128 div{_mm_div_ps(a, b)};
@@ -1510,7 +1510,7 @@ PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator/=(f32 const &scal
 
   return *this;
 #else
-  for (usize i = 0; i < N; ++i)
+  for (usize i = 0; i < 4; ++i)
   {
     m_data[i] /= scalar;
   }
@@ -1522,7 +1522,7 @@ PBRT_INLINE constexpr Vector<f32, 4> &Vector<f32, 4>::operator/=(f32 const &scal
 template <>
 PBRT_INLINE constexpr bool Vector<f32, 4>::operator==(Vector const &other) const noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+#if defined(PBRT_HAS_SSE42)
   __m128 a{_mm_loadu_ps(m_data.data())};
   __m128 b{_mm_loadu_ps(other.m_data.data())};
 
@@ -1534,7 +1534,9 @@ PBRT_INLINE constexpr bool Vector<f32, 4>::operator==(Vector const &other) const
   for (usize i = 0; i < 4; ++i)
   {
     if (m_data[i] != other[i])
+    {
       return false;
+    }
   }
   return true;
 #endif
@@ -1543,7 +1545,7 @@ PBRT_INLINE constexpr bool Vector<f32, 4>::operator==(Vector const &other) const
 template <>
 [[nodiscard]] PBRT_INLINE constexpr f32 Vector<f32, 4>::length() const noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+#if defined(PBRT_HAS_SSE42)
   __m128 a{_mm_loadu_ps(m_data.data())};
   __m128 mul{_mm_mul_ps(a, a)};
   __m128 sum{_mm_hadd_ps(mul, mul)};
@@ -1559,7 +1561,7 @@ template <>
 template <>
 [[nodiscard]] PBRT_INLINE constexpr f32 Vector<f32, 4>::min_component() const noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+#if defined(PBRT_HAS_SSE42)
   __m128 a{_mm_loadu_ps(m_data.data())};
 
   __m128 min1{_mm_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1))};
@@ -1570,14 +1572,14 @@ template <>
 
   return _mm_cvtss_f32(result);
 #else
-  return *std::min_element(cbegin(), cend());
+  return *std::ranges::min_element(cbegin(), cend());
 #endif
 }
 
 template <>
 [[nodiscard]] PBRT_INLINE constexpr f32 Vector<f32, 4>::max_component() const noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+#if defined(PBRT_HAS_SSE42)
   __m128 a{_mm_loadu_ps(m_data.data())};
 
   __m128 max1{_mm_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1))};
@@ -1588,14 +1590,14 @@ template <>
 
   return _mm_cvtss_f32(result);
 #else
-  return *std::max_element(cbegin(), cend());
+  return *std::ranges::max_element(cbegin(), cend());
 #endif
 }
 
 template <>
 [[nodiscard]] PBRT_INLINE constexpr Vector<f32, 4> Vector<f32, 4>::abs() const noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+#if defined(PBRT_HAS_SSE42)
   __m128 a{_mm_loadu_ps(m_data.data())};
   __m128 mask{_mm_castsi128_ps(_mm_set1_epi32(0x7FFFFFFF))};
   __m128 result{_mm_and_ps(a, mask)};
@@ -1617,7 +1619,7 @@ template <>
 template <>
 [[nodiscard]] PBRT_INLINE constexpr f32 Vector<f32, 4>::length_squared() const noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+#if defined(PBRT_HAS_SSE42)
   __m128 a{_mm_loadu_ps(m_data.data())};
   __m128 mul{_mm_mul_ps(a, a)};
   __m128 sum{_mm_hadd_ps(mul, mul)};
@@ -1633,7 +1635,7 @@ template <>
 template <>
 [[nodiscard]] PBRT_INLINE constexpr f32 Vector<f32, 3>::dot(Vector const &other) const noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+#if defined(PBRT_HAS_SSE42)
   __m128 a{_mm_set_ps(0.0F, m_data[2], m_data[1], m_data[0])};
   __m128 b{_mm_set_ps(0.0F, other[2], other[1], other[0])};
   __m128 mul{_mm_mul_ps(a, b)};
@@ -1652,7 +1654,7 @@ template <>
 [[nodiscard]] PBRT_API PBRT_INLINE constexpr Vector<f32, 3> cross(
     Vector<f32, 3> const &lhs, Vector<f32, 3> const &rhs) noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+#if defined(PBRT_HAS_SSE42)
   __m128 a{_mm_set_ps(0.0F, lhs[2], lhs[1], lhs[0])};
   __m128 b{_mm_set_ps(0.0F, rhs[2], rhs[1], rhs[0])};
 
@@ -1672,15 +1674,15 @@ template <>
 
   return {data[0], data[1], data[2]};
 #else
-  return {lhs[1] * rhs[2] - lhs[2] * rhs[1], lhs[2] * rhs[0] - lhs[0] * rhs[2],
-          lhs[0] * rhs[1] - lhs[1] * rhs[0]};
+  return {(lhs[1] * rhs[2]) - (lhs[2] * rhs[1]), (lhs[2] * rhs[0]) - (lhs[0] * rhs[2]),
+          (lhs[0] * rhs[1]) - (lhs[1] * rhs[0])};
 #endif
 }
 
 template <>
 [[nodiscard]] PBRT_INLINE constexpr f32 Vector<f32, 4>::dot(Vector const &other) const noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+#if defined(PBRT_HAS_SSE42)
   __m128 a{_mm_loadu_ps(m_data.data())};
   __m128 b{_mm_loadu_ps(other.m_data.data())};
   __m128 mul{_mm_mul_ps(a, b)};
@@ -1698,11 +1700,12 @@ template <>
 template <>
 PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator+=(Vector const &other) noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2)
+#if defined(PBRT_HAS_AVX2)
   __m256d a{_mm256_load_pd(m_data.data())};
-  __m256d b{_mm256_load_pd(other.m_data.data())};
+  __m256d b{_mm256_load_pd(other.data())};
   __m256d sum{_mm256_add_pd(a, b)};
-  _mm256_store_pd(m_data.data(), sum);
+
+  _mm256_store_pd(data(), sum);
   return *this;
 #else
   for (usize i = 0; i < 4; ++i)
@@ -1717,7 +1720,7 @@ PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator+=(Vector const &o
 template <>
 PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator-=(Vector const &other) noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2)
+#if defined(PBRT_HAS_AVX2)
   __m256d a{_mm256_loadu_pd(m_data.data())};
   __m256d b{_mm256_loadu_pd(other.m_data.data())};
 
@@ -1737,7 +1740,7 @@ PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator-=(Vector const &o
 template <>
 PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator*=(Vector const &other) noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2)
+#if defined(PBRT_HAS_AVX2)
   __m256d a{_mm256_loadu_pd(m_data.data())};
   __m256d b{_mm256_loadu_pd(other.m_data.data())};
 
@@ -1757,7 +1760,7 @@ PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator*=(Vector const &o
 template <>
 PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator*=(f64 const &scalar) noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2)
+#if defined(PBRT_HAS_AVX2)
   __m256d a{_mm256_loadu_pd(m_data.data())};
   __m256d b{_mm256_set1_pd(scalar)};
   __m256d result{_mm256_mul_pd(a, b)};
@@ -1777,7 +1780,7 @@ PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator*=(f64 const &scal
 template <>
 PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator/=(Vector const &other) noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2)
+#if defined(PBRT_HAS_AVX2)
   __m256d a{_mm256_loadu_pd(m_data.data())};
   __m256d b{_mm256_loadu_pd(other.m_data.data())};
 
@@ -1797,7 +1800,7 @@ PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator/=(Vector const &o
 template <>
 PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator/=(f64 const &scalar) noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2)
+#if defined(PBRT_HAS_AVX2)
   __m256d a{_mm256_loadu_pd(m_data.data())};
   __m256d b{_mm256_set1_pd(scalar)};
   __m256d result{_mm256_div_pd(a, b)};
@@ -1817,7 +1820,7 @@ PBRT_INLINE constexpr Vector<f64, 4> &Vector<f64, 4>::operator/=(f64 const &scal
 template <>
 PBRT_INLINE constexpr bool Vector<f64, 4>::operator==(Vector const &other) const noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2)
+#if defined(PBRT_HAS_AVX2)
   __m256d a{_mm256_loadu_pd(m_data.data())};
   __m256d b{_mm256_loadu_pd(other.m_data.data())};
 
@@ -1829,7 +1832,9 @@ PBRT_INLINE constexpr bool Vector<f64, 4>::operator==(Vector const &other) const
   for (usize i = 0; i < 4; ++i)
   {
     if (m_data[i] != other.m_data[i])
+    {
       return false;
+    }
   }
   return true;
 #endif
@@ -1851,7 +1856,7 @@ template <>
 template <>
 [[nodiscard]] PBRT_INLINE constexpr f64 Vector<f64, 4>::dot(Vector const &other) const noexcept
 {
-#if defined(PBRT_SIMD_LEVEL_AVX2)
+#if defined(PBRT_HAS_AVX2)
   __m256d a{_mm256_load_pd(m_data.data())};
   __m256d b{_mm256_load_pd(other.m_data.data())};
 

@@ -10,7 +10,7 @@ struct AlignmentOf
   static constexpr usize value{alignof(T)};
 };
 
-#if defined(PBRT_SIMD_LEVEL_AVX2) || defined(PBRT_SIMD_LEVEL_SSE41)
+#if defined(PBRT_HAS_SSE42)
 template <>
 struct AlignmentOf<f64>
 {

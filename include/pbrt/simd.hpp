@@ -1,9 +1,11 @@
 #pragma once
 
 #if !defined(PBRT_DISABLE_SIMD)
-  #if defined(PBRT_SIMD_LEVEL_AVX2)
+  #if defined(PBRT_HAS_AVX2)
     #include <immintrin.h>
-  #elif defined(PBRT_SIMD_LEVEL_SSE41)
+  #endif
+
+  #if defined(PBRT_HAS_SSE42)
     #include <smmintrin.h>
   #endif
 #endif
