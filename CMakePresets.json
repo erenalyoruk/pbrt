@@ -1,0 +1,144 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      }
+    },
+    {
+      "name": "windows-x64-base",
+      "inherits": "base",
+      "hidden": true,
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-windows"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "architecture": {
+        "strategy": "external",
+        "value": "x64"
+      },
+      "toolset": {
+        "strategy": "external",
+        "value": "host=x64"
+      }
+    },
+    {
+      "name": "windows-x64-debug-base",
+      "inherits": "windows-x64-base",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "windows-x64-debug-msvc",
+      "inherits": "windows-x64-debug-base",
+      "displayName": "Windows x64 Debug (MSVC)",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl.exe",
+        "CMAKE_CXX_COMPILER": "cl.exe",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "windows-x64-debug-clang",
+      "inherits": "windows-x64-debug-base",
+      "displayName": "Windows x64 Debug (Clang)",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "windows-x64-release-base",
+      "inherits": "windows-x64-base",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "windows-x64-release-msvc",
+      "inherits": "windows-x64-release-base",
+      "displayName": "Windows x64 Release (MSVC)",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl.exe",
+        "CMAKE_CXX_COMPILER": "cl.exe",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "windows-x64-release-clang",
+      "inherits": "windows-x64-release-base",
+      "displayName": "Windows x64 Release (Clang)",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-x64-debug-msvc",
+      "configurePreset": "windows-x64-debug-msvc",
+      "displayName": "Windows x64 Debug (MSVC)",
+      "description": "Build for Windows x64 Debug with MSVC"
+    },
+    {
+      "name": "windows-x64-debug-clang",
+      "configurePreset": "windows-x64-debug-clang",
+      "displayName": "Windows x64 Debug (Clang)",
+      "description": "Build for Windows x64 Debug with Clang"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "windows-x64-debug-msvc",
+      "configurePreset": "windows-x64-debug-msvc",
+      "displayName": "Windows x64 Debug (MSVC)",
+      "description": "Test for Windows x64 Debug with MSVC"
+    },
+    {
+      "name": "windows-x64-release-msvc",
+      "configurePreset": "windows-x64-release-msvc",
+      "displayName": "Windows x64 Release (MSVC)",
+      "description": "Test for Windows x64 Release with MSVC"
+    },
+    {
+      "name": "windows-x64-debug-clang",
+      "configurePreset": "windows-x64-debug-clang",
+      "displayName": "Windows x64 Debug (Clang)",
+      "description": "Test for Windows x64 Debug with Clang"
+    },
+    {
+      "name": "windows-x64-release-clang",
+      "configurePreset": "windows-x64-release-clang",
+      "displayName": "Windows x64 Release (Clang)",
+      "description": "Test for Windows x64 Release with Clang"
+    }
+  ],
+  "vendor": {
+    "microsoft.com/VisualStudioSettings/CMake/1.0": {
+      "enableClangTidyCodeAnalysis": true,
+      "enableMicrosoftCodeAnalysis": true,
+      "disableExternalAnalysis": true
+    }
+  }
+}

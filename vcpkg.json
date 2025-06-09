@@ -1,0 +1,11 @@
+{
+  "dependencies": [
+    "simde",
+    {
+      "name": "gtest",
+      "features": [
+        "cxx17"
+      ]
+    }
+  ]
+}

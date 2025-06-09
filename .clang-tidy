@@ -1,0 +1,49 @@
+Checks: >
+  -*,
+  bugprone-*,
+  cert-*,
+  concurrency-*,
+  cppcoreguidelines-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -readability-magic-numbers,
+
+WarningsAsErrors: "*"
+
+CheckOptions:
+  # Casing Style: lower_case for functions/variables, CamelCase for types.
+  readability-identifier-naming.NamespaceCase:          lower_case
+  readability-identifier-naming.ClassCase:              lower_case
+  readability-identifier-naming.StructCase:             lower_case
+  readability-identifier-naming.EnumCase:               lower_case
+  readability-identifier-naming.EnumConstantCase:       CamelCase
+  readability-identifier-naming.FunctionCase:           lower_case
+  readability-identifier-naming.GlobalFunctionCase:     lower_case
+  readability-identifier-naming.VariableCase:           lower_case
+  readability-identifier-naming.ParameterCase:          lower_case
+
+  # Member Variables: Use a trailing underscore for private members.
+  readability-identifier-naming.PrivateMemberCase:      lower_case
+  readability-identifier-naming.PrivateMemberPrefix:    ''
+  readability-identifier-naming.PrivateMemberSuffix:    '_'
+
+  # Constants: Use 'k' prefix + PascalCase. Clearly marks them as constants.
+  readability-identifier-naming.GlobalConstantCase:         CamelCase
+  readability-identifier-naming.GlobalConstantPrefix:       'k'
+  readability-identifier-naming.ConstantMemberCase:         CamelCase
+  readability-identifier-naming.ConstantMemberPrefix:       'k'
+
+  # Constexpr Functions/Methods: Treat like regular functions.
+  readability-identifier-naming.ConstexprFunctionCase:  lower_case
+  readability-identifier-naming.ConstexprMethodCase:    lower_case
+
+  # Re-enable modernize-use-nodiscard for bug prevention.
+  modernize-use-nodiscard.ReplacementString: '[[nodiscard]]'
+
+  # Other specific rule adjustments
+  cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true
+  cppcoreguidelines-macro-usage.CheckCapsOnly: true
+  readability-uppercase-literal-suffix.NewSuffixes: [ 'f', 'l', 'ul', 'll', 'ull' ]
