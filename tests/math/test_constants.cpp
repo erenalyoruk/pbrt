@@ -1,4 +1,3 @@
-#include "gtest/gtest.h"
 #include "pbrt/math/constants.hpp"
 #include "pbrt/types.hpp"
 
@@ -8,19 +7,19 @@
 
 namespace pbrt::math::test
 {
-using FloatingPointTypes = ::testing::Types<f32, f64, long double>;
+using floating_point_t = ::testing::Types<f32, f64, long double>;
 
 template <typename T>
-class ConstantsTypedTest : public ::testing::Test
+class constants_typed_test : public ::testing::Test
 {
 public:
   using FloatType = T;
-  static constexpr T kTolerance = std::is_same_v<T, f32> ? T{1e-6f} : T{1e-12};
+  static constexpr T kTolerance = std::is_same_v<T, f32> ? T{1e-6F} : T{1e-12};
 };
 
-TYPED_TEST_SUITE(ConstantsTypedTest, FloatingPointTypes);
+TYPED_TEST_SUITE(constants_typed_test, floating_point_t);
 
-TYPED_TEST(ConstantsTypedTest, PiConstants)
+TYPED_TEST(constants_typed_test, PiConstants)
 {
   using T = typename TestFixture::FloatType;
 
@@ -30,7 +29,7 @@ TYPED_TEST(ConstantsTypedTest, PiConstants)
   EXPECT_NEAR(kPiV<T> * kInvPiV<T>, T{1}, TestFixture::kTolerance);
 }
 
-TYPED_TEST(ConstantsTypedTest, Sqrt2Constants)
+TYPED_TEST(constants_typed_test, Sqrt2Constants)
 {
   using T = typename TestFixture::FloatType;
 
@@ -41,7 +40,7 @@ TYPED_TEST(ConstantsTypedTest, Sqrt2Constants)
   EXPECT_NEAR(kSqrt2V<T> * kSqrt2V<T>, T{2}, TestFixture::kTolerance);
 }
 
-TYPED_TEST(ConstantsTypedTest, EulerConstant)
+TYPED_TEST(constants_typed_test, EulerConstant)
 {
   using T = typename TestFixture::FloatType;
 
@@ -50,7 +49,7 @@ TYPED_TEST(ConstantsTypedTest, EulerConstant)
   EXPECT_LT(kEulerV<T>, T{2.8});
 }
 
-TYPED_TEST(ConstantsTypedTest, EpsilonValues)
+TYPED_TEST(constants_typed_test, EpsilonValues)
 {
   using T = typename TestFixture::FloatType;
 
@@ -60,7 +59,7 @@ TYPED_TEST(ConstantsTypedTest, EpsilonValues)
   EXPECT_LT(kEpsilonV<T>, T{1});
 }
 
-TYPED_TEST(ConstantsTypedTest, ShadowEpsilon)
+TYPED_TEST(constants_typed_test, ShadowEpsilon)
 {
   using T = typename TestFixture::FloatType;
 
@@ -68,7 +67,7 @@ TYPED_TEST(ConstantsTypedTest, ShadowEpsilon)
   EXPECT_GT(kShadowEpsilonV<T>, kEpsilonV<T>);
 }
 
-TYPED_TEST(ConstantsTypedTest, ConstexprEvaluation)
+TYPED_TEST(constants_typed_test, ConstexprEvaluation)
 {
   using T = typename TestFixture::FloatType;
 
@@ -89,14 +88,14 @@ TYPED_TEST(ConstantsTypedTest, ConstexprEvaluation)
   EXPECT_GT(shadow_epsilon, T{0});
 }
 
-TYPED_TEST(ConstantsTypedTest, PrecisionSpecificValues)
+TYPED_TEST(constants_typed_test, PrecisionSpecificValues)
 {
   using T = typename TestFixture::FloatType;
 
   if constexpr (std::is_same_v<T, f32>)
   {
-    EXPECT_LT(kEpsilonV<T>, 1e-5f);
-    EXPECT_GT(kEpsilonV<T>, 1e-8f);
+    EXPECT_LT(kEpsilonV<T>, 1e-5F);
+    EXPECT_GT(kEpsilonV<T>, 1e-8F);
   }
   else if constexpr (std::is_same_v<T, f64>)
   {

@@ -4,4 +4,7 @@ target_sources(
     "test_constants.cpp"
     "test_utility.cpp"
     "test_traits.cpp"
+    "test_vector.cpp"
 )
+
+add_subdirectory("simd")

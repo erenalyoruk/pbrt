@@ -1,4 +1,3 @@
-#include "gtest/gtest.h"
 #include "pbrt/math/utility.hpp"
 
 #include <gtest/gtest.h>
@@ -7,37 +6,37 @@
 
 namespace pbrt::math::test
 {
-using ScalarTypes = ::testing::Types<i8, i16, i32, i64, u8, u16, u32, u64, f32, f64>;
-using FloatingPointTypes = ::testing::Types<f32, f64, long double>;
-using IntegralTypes = ::testing::Types<i8, i16, i32, i64, u8, u16, u32, u64>;
+using scalar_t = ::testing::Types<i8, i16, i32, i64, u8, u16, u32, u64, f32, f64>;
+using floating_point_t = ::testing::Types<f32, f64, long double>;
+using integral_t = ::testing::Types<i8, i16, i32, i64, u8, u16, u32, u64>;
 
 template <typename T>
-class UtilityScalarTest : public ::testing::Test
+class utility_scalar_test : public ::testing::Test
 {
 public:
   using ScalarType = T;
 };
 
 template <typename T>
-class UtilityFloatingPointTest : public ::testing::Test
+class utility_floating_test : public ::testing::Test
 {
 public:
   using FloatType = T;
-  static constexpr T kTolerance = std::is_same_v<T, f32> ? T{1e-6f} : T{1e-12};
+  static constexpr T kTolerance = std::is_same_v<T, f32> ? T{1e-6F} : T{1e-12};
 };
 
 template <typename T>
-class UtilityIntegralTest : public ::testing::Test
+class utility_integral_test : public ::testing::Test
 {
 public:
   using IntegralType = T;
 };
 
-TYPED_TEST_SUITE(UtilityScalarTest, ScalarTypes);
-TYPED_TEST_SUITE(UtilityFloatingPointTest, FloatingPointTypes);
-TYPED_TEST_SUITE(UtilityIntegralTest, IntegralTypes);
+TYPED_TEST_SUITE(utility_scalar_test, scalar_t);
+TYPED_TEST_SUITE(utility_floating_test, floating_point_t);
+TYPED_TEST_SUITE(utility_integral_test, integral_t);
 
-TYPED_TEST(UtilityScalarTest, MinFunction)
+TYPED_TEST(utility_scalar_test, MinFunction)
 {
   using T = typename TestFixture::ScalarType;
 
@@ -53,7 +52,7 @@ TYPED_TEST(UtilityScalarTest, MinFunction)
   EXPECT_EQ(min(T{0}, T{0}), T{0});
 }
 
-TYPED_TEST(UtilityScalarTest, MaxFunction)
+TYPED_TEST(utility_scalar_test, MaxFunction)
 {
   using T = typename TestFixture::ScalarType;
 
@@ -69,7 +68,7 @@ TYPED_TEST(UtilityScalarTest, MaxFunction)
   EXPECT_EQ(max(T{0}, T{0}), T{0});
 }
 
-TYPED_TEST(UtilityScalarTest, ClampFunction)
+TYPED_TEST(utility_scalar_test, ClampFunction)
 {
   using T = typename TestFixture::ScalarType;
 
@@ -87,7 +86,7 @@ TYPED_TEST(UtilityScalarTest, ClampFunction)
   }
 }
 
-TYPED_TEST(UtilityFloatingPointTest, LerpFunction)
+TYPED_TEST(utility_floating_test, LerpFunction)
 {
   using T = typename TestFixture::FloatType;
 
@@ -100,7 +99,7 @@ TYPED_TEST(UtilityFloatingPointTest, LerpFunction)
   EXPECT_NEAR(lerp(T{0}, T{10}, T{-1}), T{-10}, TestFixture::kTolerance);
 }
 
-TYPED_TEST(UtilityFloatingPointTest, RadiansFunction)
+TYPED_TEST(utility_floating_test, RadiansFunction)
 {
   using T = typename TestFixture::FloatType;
 
@@ -117,7 +116,7 @@ TYPED_TEST(UtilityFloatingPointTest, RadiansFunction)
   }
 }
 
-TYPED_TEST(UtilityFloatingPointTest, DegreesFunction)
+TYPED_TEST(utility_floating_test, DegreesFunction)
 {
   using T = typename TestFixture::FloatType;
 
@@ -134,7 +133,7 @@ TYPED_TEST(UtilityFloatingPointTest, DegreesFunction)
   }
 }
 
-TYPED_TEST(UtilityFloatingPointTest, RadiansDegreesRoundTrip)
+TYPED_TEST(utility_floating_test, RadiansDegreesRoundTrip)
 {
   using T = typename TestFixture::FloatType;
 
@@ -157,7 +156,7 @@ TYPED_TEST(UtilityFloatingPointTest, RadiansDegreesRoundTrip)
   }
 }
 
-TYPED_TEST(UtilityFloatingPointTest, SqrtFunction)
+TYPED_TEST(utility_floating_test, SqrtFunction)
 {
   using T = typename TestFixture::FloatType;
 
@@ -173,7 +172,7 @@ TYPED_TEST(UtilityFloatingPointTest, SqrtFunction)
   EXPECT_GE(safe_sqrt(kEpsilonV<T>), T{0});
 }
 
-TYPED_TEST(UtilityScalarTest, ConstexprEvaluation)
+TYPED_TEST(utility_scalar_test, ConstexprEvaluation)
 {
   using T = typename TestFixture::ScalarType;
 
@@ -186,7 +185,7 @@ TYPED_TEST(UtilityScalarTest, ConstexprEvaluation)
   EXPECT_EQ(clamp_result, T{5});
 }
 
-TYPED_TEST(UtilityFloatingPointTest, ConstexprFloatEvaluation)
+TYPED_TEST(utility_floating_test, ConstexprFloatEvaluation)
 {
   using T = typename TestFixture::FloatType;
 
@@ -199,7 +198,7 @@ TYPED_TEST(UtilityFloatingPointTest, ConstexprFloatEvaluation)
   EXPECT_NEAR(degrees_result, T{180}, TestFixture::kTolerance);
 }
 
-TYPED_TEST(UtilityIntegralTest, IntegralSpecificTests)
+TYPED_TEST(utility_integral_test, IntegralSpecificTests)
 {
   using T = typename TestFixture::IntegralType;
 
