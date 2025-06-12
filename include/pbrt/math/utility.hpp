@@ -52,4 +52,29 @@ PBRT_NODISCARD PBRT_API PBRT_FORCE_INLINE PBRT_CONSTEXPR auto safe_sqrt(T value)
 {
   return std::sqrt(max(T{0}, value));
 }
+
+template <floating_point T>
+PBRT_NODISCARD PBRT_API PBRT_FORCE_INLINE PBRT_CONSTEXPR auto fast_inv_sqrt(T value) noexcept -> T
+{
+  if constexpr (std::same_as<T, f32>)
+  {
+    union {
+      f32 f;
+      u32 i;
+    } conv = {.f = value};
+    conv.i = 0x5f3759df - (conv.i >> 1);
+    conv.f *= T{1.5} - T{0.5} * value * conv.f * conv.f;
+    return conv.f;
+  }
+  else if constexpr (std::same_as<T, f64>)
+  {
+    union {
+      f64 f;
+      u64 i;
+    } conv = {.f = value};
+    conv.i = 0x5fe6ec85e7de30da - (conv.i >> 1);
+    conv.f *= T{1.5} - T{0.5} * value * conv.f * conv.f;
+    return conv.f;
+  }
+}
 } // namespace pbrt::math

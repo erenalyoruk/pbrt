@@ -14,6 +14,44 @@ struct simd_traits
   static constexpr bool kIsSimdCompatible{false};
   static constexpr usize kAlignment{alignof(T)};
   using storage_type = std::array<T, N>;
+
+  static PBRT_INLINE PBRT_CONSTEXPR auto zero() noexcept -> storage_type
+  {
+    return storage_type{};
+  }
+};
+
+template <typename SimdType, typename ScalarType, usize N>
+union simd_union {
+  alignas(alignof(SimdType)) SimdType simd_data;
+  alignas(alignof(SimdType)) std::array<ScalarType, N> scalar_data;
+
+  PBRT_CONSTEXPR simd_union() noexcept : simd_data{simd_traits<ScalarType, N>::zero()}
+  {
+  }
+
+  PBRT_CONSTEXPR simd_union(SimdType data) noexcept : simd_data{data}
+  {
+  }
+
+  PBRT_CONSTEXPR simd_union(ScalarType scalar) noexcept
+      : simd_data{simd_traits<ScalarType, N>::set1(scalar)}
+  {
+  }
+
+  PBRT_CONSTEXPR simd_union(std::array<ScalarType, N> const &data) noexcept : scalar_data{data}
+  {
+  }
+
+  constexpr auto operator[](usize index) noexcept -> ScalarType &
+  {
+    return scalar_data[index];
+  }
+
+  constexpr auto operator[](usize index) const noexcept -> ScalarType
+  {
+    return scalar_data[index];
+  }
 };
 
 template <>
@@ -21,20 +59,18 @@ struct simd_traits<f32, 4>
 {
   static constexpr bool kIsSimdCompatible{true};
   static constexpr usize kAlignment{16};
-  using simd_type = __m128;
+  using simd_type = simde__m128;
+  using storage_type = simd_union<simd_type, f32, 4>;
 
-  union storage_type {
-    alignas(kAlignment) simd_type simd_data;
-    alignas(kAlignment) std::array<f32, 4> scalar_data;
+  static PBRT_INLINE PBRT_CONSTEXPR auto zero() noexcept -> simd_type
+  {
+    return _mm_setzero_ps();
+  }
 
-    PBRT_CONSTEXPR storage_type() noexcept : simd_data{simde_mm_setzero_ps()}
-    {
-    }
-
-    PBRT_CONSTEXPR explicit storage_type(simd_type data) noexcept : simd_data{data}
-    {
-    }
-  };
+  static PBRT_INLINE PBRT_CONSTEXPR auto simd_set1(f32 value) noexcept -> simd_type
+  {
+    return _mm_set1_ps(value);
+  }
 };
 
 template <>
@@ -42,20 +78,18 @@ struct simd_traits<f32, 8>
 {
   static constexpr bool kIsSimdCompatible{true};
   static constexpr usize kAlignment{32};
-  using simd_type = __m256;
+  using simd_type = simde__m256;
+  using storage_type = simd_union<simd_type, f32, 8>;
 
-  union storage_type {
-    alignas(kAlignment) simd_type simd_data;
-    alignas(kAlignment) std::array<f32, 8> scalar_data;
+  static PBRT_INLINE PBRT_CONSTEXPR auto zero() noexcept -> simd_type
+  {
+    return simde_mm256_setzero_ps();
+  }
 
-    PBRT_CONSTEXPR storage_type() noexcept : simd_data{simde_mm256_setzero_ps()}
-    {
-    }
-
-    PBRT_CONSTEXPR explicit storage_type(simd_type data) noexcept : simd_data{data}
-    {
-    }
-  };
+  static PBRT_INLINE PBRT_CONSTEXPR auto simd_set1(f32 value) noexcept -> simd_type
+  {
+    return _mm256_set1_ps(value);
+  }
 };
 
 template <>
@@ -63,20 +97,18 @@ struct simd_traits<f64, 2>
 {
   static constexpr bool kIsSimdCompatible{true};
   static constexpr usize kAlignment{16};
-  using simd_type = __m128d;
+  using simd_type = simde__m128d;
+  using storage_type = simd_union<simd_type, f64, 2>;
 
-  union storage_type {
-    alignas(kAlignment) simd_type simd_data;
-    alignas(kAlignment) std::array<f64, 2> scalar_data;
+  static PBRT_INLINE PBRT_CONSTEXPR auto zero() noexcept -> simd_type
+  {
+    return simde_mm_setzero_pd();
+  }
 
-    PBRT_CONSTEXPR storage_type() noexcept : simd_data{simde_mm_setzero_pd()}
-    {
-    }
-
-    PBRT_CONSTEXPR explicit storage_type(simd_type data) noexcept : simd_data{data}
-    {
-    }
-  };
+  static PBRT_INLINE PBRT_CONSTEXPR auto set1(f64 value) noexcept -> simd_type
+  {
+    return _mm_set1_pd(value);
+  }
 };
 
 template <>
@@ -84,20 +116,18 @@ struct simd_traits<f64, 4>
 {
   static constexpr bool kIsSimdCompatible{true};
   static constexpr usize kAlignment{32};
-  using simd_type = __m256d;
+  using simd_type = simde__m256d;
+  using storage_type = simd_union<simd_type, f64, 4>;
 
-  union storage_type {
-    alignas(kAlignment) simd_type simd_data;
-    alignas(kAlignment) std::array<f64, 4> scalar_data;
+  static PBRT_INLINE PBRT_CONSTEXPR auto zero() noexcept -> simd_type
+  {
+    return simde_mm256_setzero_pd();
+  }
 
-    PBRT_CONSTEXPR storage_type() noexcept : simd_data{simde_mm256_setzero_pd()}
-    {
-    }
-
-    PBRT_CONSTEXPR explicit storage_type(simd_type data) noexcept : simd_data{data}
-    {
-    }
-  };
+  static PBRT_INLINE PBRT_CONSTEXPR auto set1(f64 value) noexcept -> simd_type
+  {
+    return _mm256_set1_pd(value);
+  }
 };
 
 template <typename T, usize N>
