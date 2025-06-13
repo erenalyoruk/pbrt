@@ -2,9 +2,9 @@
 
 #include "pbrt/assert.hpp"
 #include "pbrt/math/constants.hpp"
-#include "pbrt/math/simd/simd_traits.hpp"
 #include "pbrt/math/traits.hpp"
 #include "pbrt/math/utility.hpp"
+#include "pbrt/math/vector_traits.hpp"
 #include "pbrt/types.hpp"
 
 #include <array>
@@ -27,7 +27,7 @@ public:
   using reverse_iterator = typename std::array<T, N>::reverse_iterator;
   using const_reverse_iterator = typename std::array<T, N>::const_reverse_iterator;
 
-  static constexpr bool kIsSimdCompatible{simd::simd_compatible<T, N>};
+  static constexpr bool kIsSimdCompatible{simd::vector_simd_compatible<T, N>};
 
   PBRT_INLINE PBRT_CONSTEXPR vector() noexcept = default;
 
@@ -35,7 +35,11 @@ public:
   {
     if constexpr (kIsSimdCompatible)
     {
-      if constexpr (std::same_as<T, f32> && N == 4)
+      if (std::is_constant_evaluated())
+      {
+        data_.scalar_data.fill(scalar);
+      }
+      else if constexpr (std::same_as<T, f32> && N == 4)
       {
         data_.simd_data = simde_mm_set1_ps(scalar);
       }
@@ -51,10 +55,6 @@ public:
       {
         data_.simd_data = simde_mm256_set1_pd(scalar);
       }
-      else
-      {
-        data_.scalar_data.fill(scalar);
-      }
     }
     else
     {
@@ -68,13 +68,25 @@ public:
   {
     if constexpr (kIsSimdCompatible)
     {
-      if constexpr (std::same_as<T, f32> && N == 4)
+      if (std::is_constant_evaluated())
+      {
+        data_.scalar_data = {static_cast<T>(std::forward<Args>(args))...};
+      }
+      else if constexpr (std::same_as<T, f32> && N == 4)
       {
         data_.simd_data = simde_mm_setr_ps(static_cast<T>(std::forward<Args>(args))...);
       }
-      else
+      else if constexpr (std::same_as<T, f32> && N == 8)
       {
-        data_.scalar_data = {static_cast<T>(std::forward<Args>(args))...};
+        data_.simd_data = simde_mm256_setr_ps(static_cast<T>(std::forward<Args>(args))...);
+      }
+      else if constexpr (std::same_as<T, f64> && N == 2)
+      {
+        data_.simd_data = simde_mm_setr_pd(static_cast<T>(std::forward<Args>(args))...);
+      }
+      else if constexpr (std::same_as<T, f64> && N == 4)
+      {
+        data_.simd_data = simde_mm256_setr_pd(static_cast<T>(std::forward<Args>(args))...);
       }
     }
     else
@@ -84,7 +96,7 @@ public:
   }
 
   template <typename simd_type>
-    requires(kIsSimdCompatible && std::same_as<simd_type, simd::simd_t<T, N>>)
+    requires(kIsSimdCompatible && std::same_as<simd_type, simd::vector_simd_t<T, N>>)
   PBRT_INLINE PBRT_CONSTEXPR explicit vector(simd_type simd_data) noexcept : data_{simd_data}
   {
   }
@@ -93,7 +105,14 @@ public:
   {
     if constexpr (kIsSimdCompatible)
     {
-      if constexpr (std::same_as<T, f32> && N == 4)
+      if (std::is_constant_evaluated())
+      {
+        for (size_type i{0}; i < size(); ++i)
+        {
+          (*this)[i] += other[i];
+        }
+      }
+      else if constexpr (std::same_as<T, f32> && N == 4)
       {
         data_.simd_data = simde_mm_add_ps(data_.simd_data, other.simd());
       }
@@ -125,7 +144,14 @@ public:
   {
     if constexpr (kIsSimdCompatible)
     {
-      if constexpr (std::same_as<T, f32> && N == 4)
+      if (std::is_constant_evaluated())
+      {
+        for (size_type i{0}; i < size(); ++i)
+        {
+          (*this)[i] -= other[i];
+        }
+      }
+      else if constexpr (std::same_as<T, f32> && N == 4)
       {
         data_.simd_data = simde_mm_sub_ps(data_.simd_data, other.simd());
       }
@@ -157,7 +183,14 @@ public:
   {
     if constexpr (kIsSimdCompatible)
     {
-      if constexpr (std::same_as<T, f32> && N == 4)
+      if (std::is_constant_evaluated())
+      {
+        for (size_type i{0}; i < size(); ++i)
+        {
+          (*this)[i] *= scalar;
+        }
+      }
+      else if constexpr (std::same_as<T, f32> && N == 4)
       {
         data_.simd_data = simde_mm_mul_ps(data_.simd_data, simde_mm_set1_ps(scalar));
       }
@@ -189,7 +222,14 @@ public:
   {
     if constexpr (kIsSimdCompatible)
     {
-      if constexpr (std::same_as<T, f32> && N == 4)
+      if (std::is_constant_evaluated())
+      {
+        for (size_type i{0}; i < size(); ++i)
+        {
+          (*this)[i] *= other[i];
+        }
+      }
+      else if constexpr (std::same_as<T, f32> && N == 4)
       {
         data_.simd_data = simde_mm_mul_ps(data_.simd_data, other.simd());
       }
@@ -221,7 +261,14 @@ public:
   {
     if constexpr (kIsSimdCompatible)
     {
-      if constexpr (std::same_as<T, f32> && N == 4)
+      if (std::is_constant_evaluated())
+      {
+        for (size_type i{0}; i < size(); ++i)
+        {
+          (*this)[i] /= scalar;
+        }
+      }
+      else if constexpr (std::same_as<T, f32> && N == 4)
       {
         data_.simd_data = simde_mm_div_ps(data_.simd_data, simde_mm_set1_ps(scalar));
       }
@@ -253,7 +300,14 @@ public:
   {
     if constexpr (kIsSimdCompatible)
     {
-      if constexpr (std::same_as<T, f32> && N == 4)
+      if (std::is_constant_evaluated())
+      {
+        for (size_type i{0}; i < size(); ++i)
+        {
+          (*this)[i] /= other[i];
+        }
+      }
+      else if constexpr (std::same_as<T, f32> && N == 4)
       {
         data_.simd_data = simde_mm_div_ps(data_.simd_data, other.data_.simd_data);
       }
@@ -286,7 +340,17 @@ public:
   {
     if constexpr (kIsSimdCompatible)
     {
-      if constexpr (std::same_as<T, f32> && N == 4)
+      if (std::is_constant_evaluated())
+      {
+        for (size_type i{0}; i < size(); ++i)
+        {
+          if ((*this)[i] != other[i])
+          {
+            return false;
+          }
+        }
+      }
+      else if constexpr (std::same_as<T, f32> && N == 4)
       {
         return simde_mm_movemask_ps(simde_mm_cmpeq_ps(data_.simd_data, other.data_.simd_data)) ==
                0xf;
@@ -597,11 +661,17 @@ public:
   {
     if constexpr (kIsSimdCompatible)
     {
+      if (std::is_constant_evaluated())
+      {
+        return safe_sqrt(length_squared());
+      }
+
       if constexpr (std::same_as<T, f32> && N == 4)
       {
         auto const dot_result{simde_mm_dp_ps(data_.simd_data, data_.simd_data, 0xF1)};
         return simde_mm_cvtss_f32(simde_mm_sqrt_ss(dot_result));
       }
+
       if constexpr (std::same_as<T, f32> && N == 8)
       {
         auto const mul{simde_mm256_mul_ps(data_.simd_data, data_.simd_data)};
@@ -613,13 +683,15 @@ public:
         auto const scalar{simde_mm_add_ss(final, simde_mm_shuffle_ps(final, final, 0x55))};
         return simde_mm_cvtss_f32(simde_mm_sqrt_ss(scalar));
       }
-      else if constexpr (std::same_as<T, f64> && N == 2)
+
+      if constexpr (std::same_as<T, f64> && N == 2)
       {
         auto const mul{simde_mm_mul_pd(data_.simd_data, data_.simd_data)};
         auto const sum{simde_mm_hadd_pd(mul, mul)};
         return simde_mm_cvtsd_f64(simde_mm_sqrt_sd(sum, sum));
       }
-      else if constexpr (std::same_as<T, f64> && N == 4)
+
+      if constexpr (std::same_as<T, f64> && N == 4)
       {
         auto const mul{simde_mm256_mul_pd(data_.simd_data, data_.simd_data)};
         auto const sum{simde_mm256_hadd_pd(mul, mul)};
@@ -703,7 +775,7 @@ public:
   }
 
 private:
-  simd::storage_t<T, N> data_{};
+  simd::vector_storage_t<T, N> data_{};
 };
 
 template <scalar_type T, usize N>
@@ -732,22 +804,36 @@ PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto operator-(vector<T, N> const &vec
 {
   if constexpr (vector<T, N>::kIsSimdCompatible)
   {
+    if (std::is_constant_evaluated())
+    {
+      vector<T, N> result{};
+      for (typename vector<T, N>::size_type i{0}; i < N; ++i)
+      {
+        result[i] = -vec[i];
+      }
+
+      return result;
+    }
+
     if constexpr (std::same_as<T, f32> && N == 4)
     {
       auto const zero{simde_mm_setzero_ps()};
       return vector<T, N>{simde_mm_sub_ps(zero, vec.simd())};
     }
-    else if constexpr (std::same_as<T, f32> && N == 8)
+
+    if constexpr (std::same_as<T, f32> && N == 8)
     {
       auto const zero{simde_mm256_setzero_ps()};
       return vector<T, N>{simde_mm256_sub_ps(zero, vec.simd())};
     }
-    else if constexpr (std::same_as<T, f64> && N == 2)
+
+    if constexpr (std::same_as<T, f64> && N == 2)
     {
       auto const zero{simde_mm_setzero_pd()};
       return vector<T, N>{simde_mm_sub_pd(zero, vec.simd())};
     }
-    else if constexpr (std::same_as<T, f64> && N == 1)
+
+    if constexpr (std::same_as<T, f64> && N == 1)
     {
       auto const zero{simde_mm256_setzero_pd()};
       return vector<T, N>{simde_mm256_sub_pd(zero, vec.simd())};
@@ -818,11 +904,23 @@ PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto dot(vector<T, N> const &lhs,
 {
   if constexpr (vector<T, N>::kIsSimdCompatible)
   {
+    if (std::is_constant_evaluated())
+    {
+      T result{0};
+      for (typename vector<T, N>::size_type i{0}; i < N; ++i)
+      {
+        result += lhs[i] * rhs[i];
+      }
+
+      return result;
+    }
+
     if constexpr (std::same_as<T, f32> && N == 4)
     {
       return simde_mm_cvtss_f32(simde_mm_dp_ps(lhs.simd(), rhs.simd(), 0xF1));
     }
-    else if constexpr (std::same_as<T, f32> && N == 8)
+
+    if constexpr (std::same_as<T, f32> && N == 8)
     {
       auto const squared{simde_mm256_mul_ps(lhs.simd(), rhs.simd())};
       auto const sum{simde_mm256_hadd_ps(squared, squared)};
@@ -832,13 +930,15 @@ PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto dot(vector<T, N> const &lhs,
       auto const final_sum{simde_mm_add_ps(lo, hi)};
       return simde_mm_cvtss_f32(final_sum);
     }
-    else if constexpr (std::same_as<T, f64> && N == 2)
+
+    if constexpr (std::same_as<T, f64> && N == 2)
     {
       auto const squared{simde_mm_mul_pd(lhs.simd(), rhs.simd())};
       auto const sum{simde_mm_hadd_pd(squared, squared)};
       return simde_mm_cvtsd_f64(sum);
     }
-    else if constexpr (std::same_as<T, f64> && N == 4)
+
+    if constexpr (std::same_as<T, f64> && N == 4)
     {
       auto const squared{simde_mm256_mul_pd(lhs.simd(), rhs.simd())};
       auto const sum{simde_mm256_hadd_pd(squared, squared)};
