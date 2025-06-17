@@ -29,10 +29,40 @@ public:
 
   static constexpr bool kIsSimdCompatible{simd::vector_simd_compatible<T, N>};
 
-  PBRT_INLINE PBRT_CONSTEXPR vector() noexcept = default;
+  PBRT_INLINE PBRT_CONSTEXPR vector() noexcept
+  {
+    if constexpr (kIsSimdCompatible)
+    {
+      if (std::is_constant_evaluated())
+      {
+        data_.scalar_data.fill(T{});
+      }
+      else if constexpr (std::same_as<T, f32> && N == 4)
+      {
+        data_.simd_data = simde_mm_set1_ps(T{});
+      }
+      else if constexpr (std::same_as<T, f32> && N == 8)
+      {
+        data_.simd_data = simde_mm256_set1_ps(T{});
+      }
+      else if constexpr (std::same_as<T, f64> && N == 2)
+      {
+        data_.simd_data = simde_mm_set1_pd(T{});
+      }
+      else if constexpr (std::same_as<T, f64> && N == 4)
+      {
+        data_.simd_data = simde_mm256_set1_pd(T{});
+      }
+    }
+    else
+    {
+      data_.fill(T{});
+    }
+  }
 
   PBRT_INLINE PBRT_CONSTEXPR explicit vector(T scalar) noexcept
   {
+
     if constexpr (kIsSimdCompatible)
     {
       if (std::is_constant_evaluated())
@@ -405,7 +435,7 @@ public:
   }
 
   PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto operator[](size_type index) const noexcept
-      -> value_type
+      -> const_reference
   {
     PBRT_ASSERT_LT(index, N);
     if constexpr (kIsSimdCompatible)
@@ -442,25 +472,25 @@ public:
     return (*this)[3];
   }
 
-  PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto x() const noexcept -> value_type
+  PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto x() const noexcept -> const_reference
     requires(N >= 1)
   {
     return (*this)[0];
   }
 
-  PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto y() const noexcept -> value_type
+  PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto y() const noexcept -> const_reference
     requires(N >= 2)
   {
     return (*this)[1];
   }
 
-  PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto z() const noexcept -> value_type
+  PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto z() const noexcept -> const_reference
     requires(N >= 3)
   {
     return (*this)[2];
   }
 
-  PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto w() const noexcept -> value_type
+  PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto w() const noexcept -> const_reference
     requires(N >= 4)
   {
     return (*this)[3];
@@ -559,18 +589,6 @@ public:
   {
     if constexpr (kIsSimdCompatible)
     {
-      return data_.scalar_data.cend();
-    }
-    else
-    {
-      return data_.cend();
-    }
-  }
-
-  PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto cend() const noexcept -> const_iterator
-  {
-    if constexpr (kIsSimdCompatible)
-    {
       return data_.scalar_data.cbegin();
     }
     else
@@ -579,15 +597,27 @@ public:
     }
   }
 
+  PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto cend() const noexcept -> const_iterator
+  {
+    if constexpr (kIsSimdCompatible)
+    {
+      return data_.scalar_data.cend();
+    }
+    else
+    {
+      return data_.cend();
+    }
+  }
+
   PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto rbegin() noexcept -> reverse_iterator
   {
     if constexpr (kIsSimdCompatible)
     {
-      return reverse_iterator(data_.scalar_data.cend());
+      return data_.scalar_data.rbegin();
     }
     else
     {
-      return reverse_iterator(data_.cend());
+      return data_.rbegin();
     }
   }
 
@@ -595,11 +625,11 @@ public:
   {
     if constexpr (kIsSimdCompatible)
     {
-      return reverse_iterator(data_.scalar_data.cbegin());
+      return data_.scalar_data.rend();
     }
     else
     {
-      return reverse_iterator(data_.cbegin());
+      return data_.rend();
     }
   }
 
@@ -607,11 +637,11 @@ public:
   {
     if constexpr (kIsSimdCompatible)
     {
-      return const_reverse_iterator(data_.scalar_data.cend());
+      return data_.scalar_data.crbegin();
     }
     else
     {
-      return const_reverse_iterator(data_.cend());
+      return data_.crbegin();
     }
   }
 
@@ -619,11 +649,11 @@ public:
   {
     if constexpr (kIsSimdCompatible)
     {
-      return const_reverse_iterator(data_.scalar_data.cbegin());
+      return data_.scalar_data.crend();
     }
     else
     {
-      return const_reverse_iterator(data_.cbegin());
+      return data_.crend();
     }
   }
 
@@ -631,11 +661,11 @@ public:
   {
     if constexpr (kIsSimdCompatible)
     {
-      return const_reverse_iterator(data_.scalar_data.cend());
+      return data_.scalar_data.crbegin();
     }
     else
     {
-      return const_reverse_iterator(data_.cend());
+      return data_.crbegin();
     }
   }
 
@@ -643,11 +673,11 @@ public:
   {
     if constexpr (kIsSimdCompatible)
     {
-      return const_reverse_iterator(data_.scalar_data.cbegin());
+      return data_.scalar_data.crend();
     }
     else
     {
-      return const_reverse_iterator(data_.cbegin());
+      return data_.crend();
     }
   }
 
@@ -674,14 +704,15 @@ public:
 
       if constexpr (std::same_as<T, f32> && N == 8)
       {
-        auto const mul{simde_mm256_mul_ps(data_.simd_data, data_.simd_data)};
-        auto const sum{simde_mm256_hadd_ps(mul, mul)};
-        auto const lo{simde_mm256_extractf128_ps(sum, 0)};
-        auto const hi{simde_mm256_extractf128_ps(sum, 1)};
-        auto const sum2{simde_mm256_add_ps(lo, hi)};
-        auto const final{simde_mm_add_ps(sum, simde_mm_movehl_ps(sum2, sum2))};
-        auto const scalar{simde_mm_add_ss(final, simde_mm_shuffle_ps(final, final, 0x55))};
-        return simde_mm_cvtss_f32(simde_mm_sqrt_ss(scalar));
+        auto mul{simde_mm256_mul_ps(data_.simd_data, data_.simd_data)};
+        auto hi{simde_mm256_extractf128_ps(mul, 1)};
+        auto lo{simde_mm256_castps256_ps128(mul)};
+        auto sum128{simde_mm_add_ps(lo, hi)};
+        auto shuf{simde_mm_movehdup_ps(sum128)};
+        auto sums{simde_mm_add_ps(sum128, shuf)};
+        shuf = simde_mm_movehl_ps(shuf, sums);
+        sums = simde_mm_add_ss(sums, shuf);
+        return simde_mm_cvtss_f32(simde_mm_sqrt_ps(sums));
       }
 
       if constexpr (std::same_as<T, f64> && N == 2)
@@ -693,12 +724,12 @@ public:
 
       if constexpr (std::same_as<T, f64> && N == 4)
       {
-        auto const mul{simde_mm256_mul_pd(data_.simd_data, data_.simd_data)};
-        auto const sum{simde_mm256_hadd_pd(mul, mul)};
-        auto const lo{simde_mm256_extractf128_ps(sum, 0)};
-        auto const hi{simde_mm256_extractf128_ps(sum, 1)};
-        auto const sum2{simde_mm256_add_ps(lo, hi)};
-        return simde_mm_cvtss_f64(simde_mm_sqrt_sd(sum, sum));
+        auto mul{simde_mm256_mul_pd(data_.simd_data, data_.simd_data)};
+        auto hadd{simde_mm256_hadd_pd(mul, mul)};
+        auto lo{simde_mm256_extractf128_pd(hadd, 0)};
+        auto hi{simde_mm256_extractf128_pd(hadd, 1)};
+        auto sum2{simde_mm_add_pd(lo, hi)};
+        return simde_mm_cvtsd_f64(simde_mm_sqrt_sd(sum2, sum2));
       }
     }
     else
@@ -833,7 +864,7 @@ PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto operator-(vector<T, N> const &vec
       return vector<T, N>{simde_mm_sub_pd(zero, vec.simd())};
     }
 
-    if constexpr (std::same_as<T, f64> && N == 1)
+    if constexpr (std::same_as<T, f64> && N == 4)
     {
       auto const zero{simde_mm256_setzero_pd()};
       return vector<T, N>{simde_mm256_sub_pd(zero, vec.simd())};
@@ -1023,26 +1054,98 @@ template <scalar_type T, usize N>
 PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto min(vector<T, N> const &lhs,
                                                    vector<T, N> const &rhs) noexcept -> vector<T, N>
 {
-  vector<T, N> result{};
-  for (typename vector<T, N>::size_type i{0}; i < N; ++i)
+  if constexpr (vector<T, N>::kIsSimdCompatible)
   {
-    result[i] = min(lhs[i], rhs[i]);
-  }
+    if (std::is_constant_evaluated())
+    {
+      vector<T, N> result{};
+      for (typename vector<T, N>::size_type i{0}; i < N; ++i)
+      {
+        result[i] = min(lhs[i], rhs[i]);
+      }
 
-  return result;
+      return result;
+    }
+
+    if constexpr (std::same_as<T, f32> && N == 4)
+    {
+      return vector<T, N>{simde_mm_min_ps(lhs, rhs)};
+    }
+
+    if constexpr (std::same_as<T, f32> && N == 8)
+    {
+      return vector<T, N>{simde_mm256_min_ps(lhs, rhs)};
+    }
+
+    if constexpr (std::same_as<T, f64> && N == 2)
+    {
+      return vector<T, N>{simde_mm_min_pd(lhs, rhs)};
+    }
+
+    if constexpr (std::same_as<T, f64> && N == 4)
+    {
+      return vector<T, N>{simde_mm256_min_pd(lhs, rhs)};
+    }
+  }
+  else
+  {
+    vector<T, N> result{};
+    for (typename vector<T, N>::size_type i{0}; i < N; ++i)
+    {
+      result[i] = min(lhs[i], rhs[i]);
+    }
+
+    return result;
+  }
 }
 
 template <scalar_type T, usize N>
 PBRT_NODISCARD PBRT_INLINE PBRT_CONSTEXPR auto max(vector<T, N> const &lhs,
                                                    vector<T, N> const &rhs) noexcept -> vector<T, N>
 {
-  vector<T, N> result{};
-  for (typename vector<T, N>::size_type i{0}; i < N; ++i)
+  if constexpr (vector<T, N>::kIsSimdCompatible)
   {
-    result[i] = max(lhs[i], rhs[i]);
-  }
+    if (std::is_constant_evaluated())
+    {
+      vector<T, N> result{};
+      for (typename vector<T, N>::size_type i{0}; i < N; ++i)
+      {
+        result[i] = max(lhs[i], rhs[i]);
+      }
 
-  return result;
+      return result;
+    }
+
+    if constexpr (std::same_as<T, f32> && N == 4)
+    {
+      return vector<T, N>{simde_mm_max_ps(lhs, rhs)};
+    }
+
+    if constexpr (std::same_as<T, f32> && N == 8)
+    {
+      return vector<T, N>{simde_mm256_max_ps(lhs, rhs)};
+    }
+
+    if constexpr (std::same_as<T, f64> && N == 2)
+    {
+      return vector<T, N>{simde_mm_max_pd(lhs, rhs)};
+    }
+
+    if constexpr (std::same_as<T, f64> && N == 4)
+    {
+      return vector<T, N>{simde_mm256_max_pd(lhs, rhs)};
+    }
+  }
+  else
+  {
+    vector<T, N> result{};
+    for (typename vector<T, N>::size_type i{0}; i < N; ++i)
+    {
+      result[i] = max(lhs[i], rhs[i]);
+    }
+
+    return result;
+  }
 }
 
 using vector2f = vector<f32, 2>;

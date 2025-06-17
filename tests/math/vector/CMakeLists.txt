@@ -1,0 +1,11 @@
+target_sources(
+  pbrt_tests
+  PRIVATE
+    "test_vector_access.cpp"
+    "test_vector_algorithms.cpp"
+    "test_vector_arithmetic.cpp"
+    "test_vector_comprehensive.cpp"
+    "test_vector_comparison.cpp"
+    "test_vector_iterators.cpp"
+    "test_vector_simd.cpp"
+)

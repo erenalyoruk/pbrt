@@ -26,11 +26,19 @@ union vector_union {
   alignas(alignof(S)) S simd_data;
   alignas(alignof(S)) std::array<T, N> scalar_data;
 
-  vector_union() noexcept : simd_data{vector_traits<T, N>::zero()}
+  PBRT_CONSTEXPR vector_union() noexcept
   {
+    if (std::is_constant_evaluated())
+    {
+      scalar_data = {};
+    }
+    else
+    {
+      simd_data = vector_traits<T, N>::zero();
+    }
   }
 
-  vector_union(S data) noexcept : simd_data{data}
+  PBRT_CONSTEXPR vector_union(S data) noexcept : simd_data{data}
   {
   }
 
@@ -38,7 +46,7 @@ union vector_union {
   {
   }
 
-  vector_union(std::array<T, N> const &data) noexcept : scalar_data{data}
+  PBRT_CONSTEXPR vector_union(std::array<T, N> const &data) noexcept : scalar_data{data}
   {
   }
 
@@ -47,7 +55,7 @@ union vector_union {
     return scalar_data[index];
   }
 
-  PBRT_INLINE PBRT_CONSTEXPR auto operator[](usize index) const noexcept -> T
+  PBRT_INLINE PBRT_CONSTEXPR auto operator[](usize index) const noexcept -> T const &
   {
     return scalar_data[index];
   }
@@ -66,7 +74,7 @@ struct vector_traits<f32, 4>
     return _mm_setzero_ps();
   }
 
-  static PBRT_INLINE auto simd_set1(f32 value) noexcept -> simd_type
+  static PBRT_INLINE auto set1(f32 value) noexcept -> simd_type
   {
     return _mm_set1_ps(value);
   }
@@ -85,7 +93,7 @@ struct vector_traits<f32, 8>
     return simde_mm256_setzero_ps();
   }
 
-  static PBRT_INLINE auto simd_set1(f32 value) noexcept -> simd_type
+  static PBRT_INLINE auto set1(f32 value) noexcept -> simd_type
   {
     return _mm256_set1_ps(value);
   }
